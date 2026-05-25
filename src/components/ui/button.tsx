@@ -1,29 +1,40 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
+
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  [
+    "group/button inline-flex shrink-0 items-center justify-center gap-2",
+    "rounded-sm border border-transparent bg-clip-padding",
+    "font-semibold uppercase tracking-[0.12em] no-underline",
+    "transition-[background-color,color,border-color,box-shadow,transform] outline-none select-none",
+    "focus-visible:border-clay focus-visible:ring-2 focus-visible:ring-clay/30",
+    "active:translate-y-px",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/30",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+    "hover:no-underline",
+  ].join(" "),
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        default: "bg-clay text-white hover:bg-clay-dark",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border-border text-charcoal hover:border-charcoal hover:bg-paper",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-paper text-charcoal hover:bg-paper hover:text-clay",
+        ghost: "text-charcoal hover:text-clay",
+        link: "rounded-none border-0 px-0 text-clay normal-case tracking-normal underline-offset-4 hover:underline",
+        destructive: "bg-destructive text-white hover:bg-destructive/90",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-11 px-5 text-[12px]",
+        sm: "h-9 px-4 text-[11px]",
+        lg: "h-14 px-8 text-[13px]",
+        xl: "h-14 px-9 text-sm",
+        icon: "size-11",
+        "icon-sm": "size-9",
       },
     },
     defaultVariants: {
@@ -33,24 +44,27 @@ const buttonVariants = cva(
   },
 );
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  nativeButton,
+  render,
+  ...props
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  // When rendering as a non-button element (e.g. <Link>), Base UI requires
+  // `nativeButton={false}` to drop native <button> semantics. Auto-default to
+  // false whenever a `render` prop is supplied so callers don't have to remember.
+  const resolvedNativeButton = nativeButton ?? render === undefined;
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      nativeButton={resolvedNativeButton}
+      render={render}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  );
 }
-
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
-Button.displayName = "Button";
 
 export { Button, buttonVariants };

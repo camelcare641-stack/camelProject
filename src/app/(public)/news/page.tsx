@@ -1,73 +1,96 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
-import { news as t } from "@/lib/content";
+import type { Metadata } from "next";
+import { getNews } from "@/features/news/queries";
 import { formatDate } from "@/lib/utils";
-import type { News } from "@/types/database";
+import { cta, site } from "@/lib/content";
 
-export const metadata = { title: t.title };
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Мэдээ",
+  description: `${site.fullName} — хөтөлбөрийн мэдээ, үйл ажиллагааны тайлан.`,
+};
 
-export default async function NewsListPage() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("news")
-    .select(
-      "id, slug, title, content, cover_image_url, published, published_at, created_at",
-    )
-    .eq("published", true)
-    .order("published_at", { ascending: false });
+export const revalidate = 60;
 
-  const posts = (data as News[] | null) ?? [];
+export default async function NewsIndexPage() {
+  const news = await getNews(50);
 
   return (
-    <section className="mx-auto max-w-4xl px-4 py-12">
-      <div className="mb-8 space-y-1 text-center">
-        <h1 className="text-3xl font-bold">{t.title}</h1>
-        <p className="text-muted-foreground">{t.subtitle}</p>
-      </div>
-
-      {posts.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground">{t.empty}</p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {posts.map((p) => (
-            <Card key={p.id} className="overflow-hidden">
-              {p.cover_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={p.cover_image_url}
-                  alt={p.title}
-                  className="h-40 w-full object-cover"
-                />
-              ) : null}
-              <CardHeader>
-                <CardTitle>
-                  <Link href={`/news/${p.slug}`} className="hover:underline">
-                    {p.title}
-                  </Link>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {p.published_at ? (
-                  <div className="text-xs text-muted-foreground">
-                    {formatDate(p.published_at)}
-                  </div>
-                ) : null}
-                <p className="line-clamp-3 text-sm text-muted-foreground">
-                  {p.content}
-                </p>
-                <Link
-                  href={`/news/${p.slug}`}
-                  className="text-sm font-medium underline"
-                >
-                  {t.readMore}
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+    <>
+      <section className="border-b border-border bg-white">
+        <div className="mx-auto max-w-4xl px-4 pt-16 pb-12 sm:px-6 sm:pt-20">
+          <p className="eyebrow">Сэтгүүл</p>
+          <h1 className="mt-4 font-display text-4xl font-bold text-balance text-charcoal sm:text-6xl">
+            Мэдээ
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-charcoal-muted">
+            Төслийн үйл ажиллагаа, үр дүн, тайлангийн мэдээллүүд.
+          </p>
         </div>
-      )}
-    </section>
+      </section>
+
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          {news.length === 0 ? (
+            <p className="text-charcoal-muted">Удахгүй…</p>
+          ) : (
+            <ul className="divide-y divide-border border-y border-border">
+              {news.map((n) => (
+                <li key={n.id} className="py-10">
+                  <div className="grid gap-6 sm:grid-cols-[10rem_1fr] sm:gap-8">
+                    <Link
+                      href={`/news/${n.slug}`}
+                      className="group relative block aspect-[4/3] w-full overflow-hidden bg-paper no-underline hover:no-underline sm:aspect-[4/5]"
+                    >
+                      {n.image_url ? (
+                        <Image
+                          src={n.image_url}
+                          alt={n.title}
+                          fill
+                          sizes="(min-width:640px) 160px, 100vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-charcoal-muted">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="h-8 w-8">
+                            <rect x="3" y="5" width="18" height="14" rx="1" />
+                            <circle cx="9" cy="11" r="2" />
+                            <path d="m21 17-5-5-9 9" />
+                          </svg>
+                        </div>
+                      )}
+                    </Link>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.15em] text-charcoal-muted">
+                        {formatDate(n.published_at)}
+                      </p>
+                      <h2 className="mt-2 font-display text-2xl font-bold leading-snug text-charcoal sm:text-3xl">
+                        <Link
+                          href={`/news/${n.slug}`}
+                          className="text-charcoal no-underline hover:text-clay hover:underline"
+                        >
+                          {n.title}
+                        </Link>
+                      </h2>
+                      {n.summary && (
+                        <p className="mt-3 text-base leading-relaxed text-charcoal-muted">
+                          {n.summary}
+                        </p>
+                      )}
+                      <Link
+                        href={`/news/${n.slug}`}
+                        className="mt-4 inline-flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.12em] text-clay no-underline hover:text-clay-dark hover:no-underline"
+                      >
+                        {cta.details} →
+                      </Link>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+    </>
   );
 }

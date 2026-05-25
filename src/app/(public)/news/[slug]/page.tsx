@@ -1,58 +1,95 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
-import { createClient } from "@/lib/supabase/server";
-import { news as t } from "@/lib/content";
+import type { Metadata } from "next";
+import { Button } from "@/components/ui/button";
+import { getAllNewsSlugs, getNewsBySlug } from "@/features/news/queries";
 import { formatDate } from "@/lib/utils";
-import type { News } from "@/types/database";
+import { cta } from "@/lib/content";
 
-interface NewsPostProps {
-  params: Promise<{ slug: string }>;
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const slugs = await getAllNewsSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
-export const dynamic = "force-dynamic";
-
-export default async function NewsPostPage({ params }: NewsPostProps) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("news")
-    .select(
-      "id, slug, title, content, cover_image_url, published, published_at, created_at",
-    )
-    .eq("slug", slug)
-    .eq("published", true)
-    .maybeSingle();
+  const n = await getNewsBySlug(slug);
+  if (!n) return { title: "Мэдээ" };
+  return {
+    title: n.title,
+    description: n.summary ?? undefined,
+    openGraph: n.image_url ? { images: [n.image_url] } : undefined,
+  };
+}
 
-  const post = data as News | null;
-  if (!post) notFound();
+export default async function NewsDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const n = await getNewsBySlug(slug);
+  if (!n) notFound();
 
   return (
-    <article className="mx-auto max-w-3xl space-y-6 px-4 py-12">
-      <Link
-        href="/news"
-        className="text-sm text-muted-foreground hover:underline"
-      >
-        ← {t.backToList}
-      </Link>
-      {post.cover_image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={post.cover_image_url}
-          alt={post.title}
-          className="w-full rounded-lg object-cover"
-        />
-      ) : null}
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold">{post.title}</h1>
-        {post.published_at ? (
-          <div className="text-xs text-muted-foreground">
-            {formatDate(post.published_at)}
+    <article className="bg-white">
+      <div className="mx-auto max-w-3xl px-4 pt-10 pb-20 sm:px-6 sm:pt-14">
+        <Link
+          href="/news"
+          className="inline-flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.12em] text-charcoal no-underline hover:text-clay hover:no-underline"
+        >
+          ← Мэдээ рүү буцах
+        </Link>
+
+        <header className="mt-10 border-b border-border pb-10">
+          <p className="text-xs uppercase tracking-[0.15em] text-charcoal-muted">
+            {formatDate(n.published_at)}
+          </p>
+          <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-balance text-charcoal sm:text-5xl">
+            {n.title}
+          </h1>
+          {n.summary && (
+            <p className="mt-6 font-display text-xl italic leading-relaxed text-charcoal-muted sm:text-2xl">
+              {n.summary}
+            </p>
+          )}
+        </header>
+
+        {n.image_url && (
+          <div className="relative mt-10 aspect-[16/9] w-full overflow-hidden bg-paper">
+            <Image
+              src={n.image_url}
+              alt={n.title}
+              fill
+              sizes="(min-width:768px) 768px, 100vw"
+              className="object-cover"
+              priority
+            />
           </div>
-        ) : null}
-      </header>
-      <div className="prose prose-neutral max-w-none whitespace-pre-line">
-        {post.content}
+        )}
+
+        {n.content && (
+          <div
+            className="news-content mt-10 text-lg leading-[1.75] text-charcoal"
+            dangerouslySetInnerHTML={{ __html: n.content }}
+          />
+        )}
+
+        <div className="mt-16 border-t border-border pt-10 text-center">
+          <p className="font-display text-xl italic text-charcoal sm:text-2xl">
+            Энэхүү үйл ажиллагааг үргэлжлүүлэхэд таны дэмжлэг хэрэгтэй.
+          </p>
+          <Button size="lg" className="mt-6" render={<Link href="/donate" />}>
+            {cta.donate}
+          </Button>
+        </div>
       </div>
     </article>
   );

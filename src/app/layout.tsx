@@ -1,22 +1,39 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata, Viewport } from "next";
+import { Alegreya, Manrope } from "next/font/google";
+import { Header } from "@/components/site/header";
 import { Toaster } from "@/components/ui/sonner";
 import { site } from "@/lib/content";
+import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const alegreya = Alegreya({
   subsets: ["latin", "cyrillic"],
+  variable: "--font-alegreya",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const manrope = Manrope({
   subsets: ["latin", "cyrillic"],
+  variable: "--font-manrope",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: { default: site.name, template: `%s · ${site.name}` },
+  title: {
+    default: site.fullName,
+    template: `%s · ${site.name}`,
+  },
   description: site.description,
+  openGraph: {
+    title: site.fullName,
+    description: site.description,
+    type: "website",
+    locale: "mn_MN",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FFFFFF",
 };
 
 export default function RootLayout({
@@ -25,11 +42,17 @@ export default function RootLayout({
   return (
     <html
       lang="mn"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${alegreya.variable} ${manrope.variable}`}
     >
-      <body className="flex min-h-full flex-col bg-background text-foreground">
-        {children}
-        <Toaster richColors position="top-center" />
+      <body className="flex min-h-screen flex-col bg-white text-charcoal">
+        <a href="#main" className="skip-link">
+          Гол агуулга руу шилжих
+        </a>
+        <Header />
+        <main id="main" className="flex flex-1 flex-col">
+          {children}
+        </main>
+        <Toaster richColors position="top-center" closeButton />
       </body>
     </html>
   );

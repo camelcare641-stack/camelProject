@@ -1,98 +1,31 @@
-"use client";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { LoginForm } from "@/features/admin/components/login-form";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
-import { admin, errors } from "@/lib/content";
-import { adminLoginSchema, type AdminLoginInput } from "@/lib/validations";
+export const metadata: Metadata = {
+  title: "Удирдлагын нэвтрэлт",
+  robots: { index: false, follow: false },
+};
 
 export default function AdminLoginPage() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const [submitting, setSubmitting] = useState(false);
-
-  const form = useForm<AdminLoginInput>({
-    resolver: zodResolver(adminLoginSchema),
-    defaultValues: { email: "", password: "" },
-  });
-
-  async function onSubmit(values: AdminLoginInput) {
-    setSubmitting(true);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword(values);
-      if (error) throw error;
-      router.replace(params.get("next") ?? "/admin");
-      router.refresh();
-    } catch (e) {
-      console.error(e);
-      toast.error(errors.generic);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
-    <section className="mx-auto flex max-w-md flex-col px-4 py-16">
-      <Card>
-        <CardHeader>
-          <CardTitle>{admin.loginTitle}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{admin.emailLabel}</FormLabel>
-                    <FormControl>
-                      <Input type="email" autoComplete="username" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{admin.passwordLabel}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        autoComplete="current-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {admin.signIn}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+    <section className="bg-paper py-20 sm:py-24">
+      <div className="mx-auto max-w-md px-4 sm:px-6">
+        <div className="border border-border bg-white p-8 sm:p-10">
+          <p className="eyebrow">Удирдлага</p>
+          <h1 className="mt-3 font-display text-3xl font-bold text-charcoal">
+            Нэвтрэх
+          </h1>
+          <p className="mt-2 text-sm text-charcoal-muted">
+            Зөвхөн админ нэвтэрнэ үү.
+          </p>
+          <div className="mt-7">
+            <Suspense>
+              <LoginForm />
+            </Suspense>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

@@ -1,93 +1,239 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* ─────────────────────────────────────────────────────────────────────────────
+ * "ТЭМЭЭ" — editorial / foundation palette.
+ *
+ * Single brand color (clay), charcoal text on warm white (paper) surfaces.
+ * shadcn primitives consume the standard --primary/--secondary/--muted/etc
+ * tokens, so every shadcn token is aliased to the editorial palette here.
+ * No dark mode (site is intentionally single-theme).
+ * ──────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.625rem;
-}
+  /* Editorial palette */
+  --white:           #FFFFFF;
+  --paper:           #FAF7F2;
+  --clay:            #9C4F22;
+  --clay-dark:       #7E3F1A;
+  --clay-tint:       #F3E6DC;
+  --charcoal:        #1F1B17;
+  --charcoal-muted:  #6E6962;
+  --border-strong:   #D6CFC0;
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /* shadcn token contract */
+  --background:           var(--white);
+  --foreground:           var(--charcoal);
+  --card:                 var(--white);
+  --card-foreground:      var(--charcoal);
+  --popover:              var(--white);
+  --popover-foreground:   var(--charcoal);
+  --primary:              var(--clay);
+  --primary-foreground:   var(--white);
+  --secondary:            var(--paper);
+  --secondary-foreground: var(--charcoal);
+  --muted:                var(--paper);
+  --muted-foreground:     var(--charcoal-muted);
+  --accent:               var(--paper);
+  --accent-foreground:    var(--charcoal);
+  --destructive:          #B91C1C;
+  --border:               #E6E0D4;
+  --input:                #E6E0D4;
+  --ring:                 var(--clay);
+  --radius:               0.375rem;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
+  --font-display: var(--font-alegreya), Georgia, "Times New Roman", serif;
+  --font-sans:    var(--font-manrope), system-ui, sans-serif;
+
+  /* Editorial color aliases */
+  --color-white:           var(--white);
+  --color-paper:           var(--paper);
+  --color-clay:            var(--clay);
+  --color-clay-dark:       var(--clay-dark);
+  --color-clay-tint:       var(--clay-tint);
+  --color-charcoal:        var(--charcoal);
+  --color-charcoal-muted:  var(--charcoal-muted);
+  --color-border-strong:   var(--border-strong);
+
+  /* shadcn color aliases — required by ui/* components */
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-secondary:            var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-destructive:          var(--destructive);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
+  html { scroll-behavior: smooth; color-scheme: light; }
   body {
-    @apply bg-background text-foreground;
+    background: var(--white);
+    color: var(--charcoal);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--charcoal);
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+  h1, h2 { font-weight: 700; }
+  h3     { font-weight: 600; }
+  a {
+    color: var(--clay);
+    text-decoration: none;
+    text-underline-offset: 3px;
+  }
+  a:hover { color: var(--clay-dark); text-decoration: underline; }
+  hr { border-color: var(--border); }
+  ::selection { background: var(--clay); color: var(--white); }
+  * {
+    border-color: var(--border);
   }
 }
 
-@keyframes ticker {
-  0% { transform: translateX(0); }
+@layer components {
+  /* Small-caps eyebrow label. Allow per-instance utility overrides. */
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--clay);
+  }
+
+  /* Long-form prose rendered from the news rich-text editor (TinyMCE HTML). */
+  .news-content > * + * { margin-top: 1.25em; }
+  .news-content p { font-size: 1.0625rem; line-height: 1.75; }
+  .news-content h2 {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 2em;
+  }
+  .news-content h3 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-top: 1.75em;
+  }
+  .news-content a {
+    color: var(--clay);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .news-content a:hover { color: var(--clay-dark); }
+  .news-content ul, .news-content ol {
+    padding-left: 1.5rem;
+  }
+  .news-content ul { list-style: disc; }
+  .news-content ol { list-style: decimal; }
+  .news-content li { margin-top: 0.4em; }
+  .news-content blockquote {
+    border-left: 3px solid var(--clay);
+    padding: 0.25em 0 0.25em 1rem;
+    color: var(--charcoal-muted);
+    font-style: italic;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+  }
+  .news-content hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 2.5em 0;
+  }
+  .news-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 1.5em 0;
+  }
+  .news-content code {
+    background: var(--paper);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-sm);
+    font-size: 0.9em;
+  }
+  .news-content pre {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: 0.9em;
+  }
+  .news-content strong { color: var(--charcoal); font-weight: 600; }
+}
+
+/* Donor marquee — infinite horizontal scroll, paused on hover. */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+.animate-marquee { animation: marquee 90s linear infinite; }
+.animate-marquee:hover { animation-play-state: paused; }
 
-.animate-ticker {
-  animation: ticker 40s linear infinite;
+/* Tabular numerics — use on any numeric value that updates or sits in a column
+   (raised total, donor counts, account numbers, dates, MNT amounts). */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Honor user's reduced-motion preference globally. Components can still opt
+   in explicitly with `motion-safe:*` for animations that are essential. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-marquee { animation: none !important; }
 }
+
+/* Skip-link target — visible only when focused via keyboard. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  padding: 0.625rem 1rem;
+  background: var(--charcoal);
+  color: var(--white);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transform: translateY(-150%);
+  transition: transform 150ms ease-out;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
+}
+

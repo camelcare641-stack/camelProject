@@ -1,116 +1,117 @@
-import { NextResponse, type NextRequest } from "next/server";
-
+import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { checkPayment } from "@/lib/qpay/client";
+import { checkInvoicePayment } from "@/lib/qpay/client";
+import { sendThankYouEmail } from "@/lib/email/send-thank-you";
+import { site } from "@/lib/content";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// QPay v2 calls this URL after a payment. We treat the callback as a notice
+// only — the source of truth is checkInvoicePayment, which we call before
+// flipping the donation to `paid`. Idempotent via `.eq("status", "pending")`.
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const donationId = searchParams.get("donation_id");
 
-/**
- * POST /api/qpay/callback
- *
- * QPay hits this endpoint when an invoice is paid. The endpoint MUST be
- * idempotent — QPay can retry on network errors. We use qpay_payment_id as
- * the unique idempotency key (DB-level UNIQUE constraint on donations).
- *
- * Security:
- *  - Never trust the request body's `payment_status` / `amount` blindly.
- *    Always call back into QPay's check-payment endpoint with the
- *    `invoice_id` and verify the row in the response.
- *  - Treat this endpoint as PUBLIC; do not perform privileged actions
- *    without re-verifying with QPay first.
- *
- * TODO (you must finish): confirm the exact callback payload shape against
- * your merchant docs. The fields we read below (`object_id`, `payment_id`)
- * are the common QPay v2 shape but may differ for your contract.
- */
-export async function POST(req: NextRequest) {
-  // QPay v2 may pass identifiers via query OR JSON body; accept both.
-  const url = new URL(req.url);
-  const qpInvoiceId =
-    url.searchParams.get("qpay_invoice_id") ??
-    url.searchParams.get("object_id") ??
-    null;
-
-  let body: Record<string, unknown> = {};
-  try {
-    body = (await req.json()) as Record<string, unknown>;
-  } catch {
-    // Some QPay deployments send an empty body — that's fine; we'll trust
-    // the query string + re-verify with check-payment below.
+  if (!donationId) {
+    return NextResponse.json({ ok: false, error: "missing donation_id" }, { status: 400 });
   }
 
-  const invoiceId =
-    qpInvoiceId ?? (body.object_id as string) ?? (body.qpay_invoice_id as string);
+  const supabase = createAdminClient();
 
-  if (!invoiceId) {
-    return NextResponse.json({ error: "missing_invoice_id" }, { status: 400 });
-  }
-
-  // 1) Re-verify the payment with QPay server-to-server.
-  let check;
-  try {
-    check = await checkPayment(invoiceId);
-  } catch (e) {
-    console.error("[qpay/callback] checkPayment failed", e);
-    return NextResponse.json({ error: "qpay_check_failed" }, { status: 502 });
-  }
-
-  const paidRow = check.rows.find((r) => r.payment_status === "PAID");
-  if (!paidRow) {
-    // Not paid yet (or refunded/failed). Acknowledge so QPay stops retrying;
-    // status will be updated on a later callback or via /api/qpay/check.
-    return NextResponse.json({ ok: true, status: "not_paid" });
-  }
-
-  const admin = createAdminClient();
-
-  // 2) Idempotent update keyed on qpay_payment_id.
-  // First try to upgrade an existing pending row whose payment_id we don't
-  // know yet (qpay_payment_id IS NULL). If another callback already updated
-  // it, the unique index on qpay_payment_id will block a duplicate.
-  const { data: existingRow } = await admin
+  const { data: donation, error: fetchError } = await supabase
     .from("donations")
-    .select("id, status, qpay_payment_id")
-    .eq("qpay_invoice_id", invoiceId)
-    .maybeSingle();
+    .select("id, status, amount, email, name, qpay_invoice_id, anonymous")
+    .eq("id", donationId)
+    .single();
 
-  const existing = existingRow as
-    | { id: string; status: string; qpay_payment_id: string | null }
-    | null;
-
-  if (!existing) {
-    console.warn("[qpay/callback] no donation for invoice", invoiceId);
-    return NextResponse.json({ ok: true, status: "unknown_invoice" });
+  if (fetchError || !donation) {
+    console.error("qpay callback: donation not found", donationId, fetchError);
+    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
   }
 
-  if (existing.qpay_payment_id === paidRow.payment_id) {
-    // Already processed — short-circuit (idempotent).
-    return NextResponse.json({ ok: true, status: "already_paid" });
+  if (donation.status !== "pending") {
+    // Already processed — idempotent no-op.
+    return NextResponse.json({ ok: true, already: true });
   }
 
-  // TODO: optionally also verify paidRow.payment_amount matches the
-  // expected amount on `existing` (guard against tampered callbacks).
+  if (!donation.qpay_invoice_id) {
+    return NextResponse.json({ ok: false, error: "no invoice id" }, { status: 400 });
+  }
 
-  const { error: updateError } = await admin
+  // Verify with QPay before trusting the callback.
+  let payment;
+  try {
+    const check = await checkInvoicePayment(donation.qpay_invoice_id);
+    payment = check.rows.find((r) => r.payment_status === "PAID");
+    if (!payment) {
+      return NextResponse.json({ ok: false, error: "no paid payment" }, { status: 200 });
+    }
+  } catch (err) {
+    console.error("qpay callback: checkInvoicePayment failed", err);
+    return NextResponse.json({ ok: false, error: "verify failed" }, { status: 500 });
+  }
+
+  const paidAmount = Number(payment.payment_amount);
+  if (paidAmount < donation.amount) {
+    console.warn(
+      `qpay callback: underpaid donation ${donation.id} — expected ${donation.amount}, got ${paidAmount}`,
+    );
+    // Continue anyway; the operator can reconcile manually.
+  }
+
+  // Idempotent update: only one writer can flip status away from 'pending'.
+  const { data: updated, error: updateError } = await supabase
     .from("donations")
     .update({
       status: "paid",
-      qpay_payment_id: paidRow.payment_id,
-      paid_at: paidRow.payment_date ?? new Date().toISOString(),
+      qpay_payment_id: payment.payment_id,
+      paid_at: payment.payment_date ?? new Date().toISOString(),
     })
-    .eq("id", existing.id)
-    .eq("status", "pending"); // narrow update to avoid double-credit races
+    .eq("id", donation.id)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
 
   if (updateError) {
-    console.error("[qpay/callback] update failed", updateError);
-    return NextResponse.json({ error: "db_update_failed" }, { status: 500 });
+    console.error("qpay callback: update failed", updateError);
+    return NextResponse.json({ ok: false, error: "update failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, status: "paid" });
+  if (!updated) {
+    // Someone else already flipped it. No-op.
+    return NextResponse.json({ ok: true, already: true });
+  }
+
+  // Mirror into `donors` so the marquee + SupportBar pick it up immediately.
+  // We use the display name (or "Анонимоор хандивласан" when anonymous).
+  const displayName = donation.anonymous ? "Анонимоор хандивласан" : donation.name;
+  const { error: donorError } = await supabase
+    .from("donors")
+    .insert({ name: displayName, amount: donation.amount });
+  if (donorError) {
+    console.error("qpay callback: failed to mirror to donors", donorError);
+    // Non-fatal.
+  }
+
+  // Send thank-you email. Non-fatal if it fails.
+  try {
+    await sendThankYouEmail({
+      to: donation.email,
+      name: donation.name,
+      amount: donation.amount,
+      willShipCharm: donation.amount >= site.unitPrice,
+    });
+    await supabase
+      .from("donations")
+      .update({ thank_you_sent_at: new Date().toISOString() })
+      .eq("id", donation.id);
+  } catch (err) {
+    console.error("qpay callback: email send failed", err);
+  }
+
+  return NextResponse.json({ ok: true });
 }
 
-// QPay sometimes sends GET pings as a healthcheck. Accept them.
-export async function GET() {
-  return NextResponse.json({ ok: true });
+// QPay may also POST. Treat the same way.
+export async function POST(req: Request) {
+  return GET(req);
 }
