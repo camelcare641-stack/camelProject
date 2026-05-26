@@ -1,3 +1,4 @@
+import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
 import { SupportBar } from "@/components/site/support-bar";
 
@@ -10,6 +11,7 @@ export default function PublicLayout({
 }) {
   return (
     <>
+      <Header />
       <div className="flex-1">{children}</div>
       <Footer />
       <SupportBar />

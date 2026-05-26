@@ -36,9 +36,11 @@ export function slugify(input: string): string {
 
 export function formatDate(date: string | Date): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("mn-MN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
+  // Format deterministically as YYYY.MM.DD in UTC so the output is identical on
+  // the server and the client. Relying on Intl locale data (e.g. "mn-MN") causes
+  // hydration mismatches because Node and the browser ship different ICU data.
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${year}.${month}.${day}`;
 }

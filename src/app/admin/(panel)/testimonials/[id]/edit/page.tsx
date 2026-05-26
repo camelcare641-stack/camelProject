@@ -21,8 +21,8 @@ export default async function EditTestimonialPage({
   if (!item) notFound();
 
   return (
-    <section className="py-12 sm:py-16">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+    <section className="px-4 py-8 sm:px-6 lg:px-10">
+      <div className="max-w-3xl">
         <Link
           href="/admin/testimonials"
           className="text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted no-underline hover:text-clay hover:no-underline"

@@ -3,7 +3,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { cta, site } from "@/lib/content";
-import { getPartners } from "@/features/about/queries";
+import { getPartners, getAboutItems } from "@/features/about/queries";
+import { getSiteSettings } from "@/features/settings/queries";
 
 export const metadata: Metadata = {
   title: "Төслийн тухай",
@@ -12,49 +13,13 @@ export const metadata: Metadata = {
 
 export const revalidate = 120;
 
-const goals = [
-  "Хүүхдүүдэд амьдрах ухаан, хувь хүний хөгжлийн сургалт зохион байгуулах.",
-  "Сэтгэлзүйн зөвлөгөө, сэтгэл заслын дэмжлэг үзүүлэх.",
-  "Эрсдэлт нөхцөлд байгаа хүүхдүүдийг нийгмийн хамгааллын үйлчилгээтэй холбох.",
-  "Хүүхдийн өөртөө итгэх итгэл болон нийгмийн оролцоог нэмэгдүүлэх.",
-  "Сайн дурын болон олон нийтийн оролцоог нэмэгдүүлэх.",
-];
-
-const targets = [
-  "Хотын захын хорооллын хүүхдүүд",
-  "Амьжиргааны түвшин доогуур өрхийн хүүхдүүд",
-  "Сэтгэлзүйн дэмжлэг шаардлагатай хүүхдүүд",
-  "Сургууль завсардалтын эрсдэлтэй хүүхдүүд",
-  "Хүчирхийлэл, үл хайхралд өртөх эрсдэлтэй хүүхдүүд",
-  "Өөртөө итгэх итгэл сул хүүхдүүд",
-];
-
-const outcomes = [
-  "Хүүхдийн сэтгэлзүйн байдал сайжирна",
-  "Өөртөө итгэх итгэл нэмэгдэнэ",
-  "Нийгмийн оролцоо сайжирна",
-  "Сургууль завсардалт буурна",
-  "Эерэг хандлага төлөвшинө",
-  "Иргэдийн сайн дурын оролцоо нэмэгдэнэ",
-];
-
-const camelPoints = [
-  {
-    title: "Гар урлалын бүтээгдэхүүн",
-    body: "Арьсаар гараар хийсэн тэмээн цүнх / түлхүүрний оосор.",
-  },
-  {
-    title: "25,000₮ = Нэг хүүхдийн боломж",
-    body: "Сургалт, сэтгэлзүйн зөвлөгөө, хөгжлийн үйл ажиллагаа, хамгааллын үйлчилгээ, урлаг спортын оролцоонд нэг хүүхдэд хүрэх бодит дэмжлэг.",
-  },
-  {
-    title: "Зүүсэн хүний үнэ цэн",
-    body: "Ижил зорилготой хүмүүсийн хүрээлэлд нэгдэнэ.",
-  },
-];
-
 export default async function AboutPage() {
-  const partners = await getPartners();
+  const [partners, settings, about] = await Promise.all([
+    getPartners(),
+    getSiteSettings(),
+    getAboutItems(),
+  ]);
+  const { goals, targets, outcomes, camelPoints } = about;
 
   return (
     <>
@@ -63,13 +28,13 @@ export default async function AboutPage() {
         <div className="mx-auto max-w-4xl px-4 pt-16 pb-12 sm:px-6 sm:pt-20">
           <p className="eyebrow">Төслийн танилцуулга</p>
           <h1 className="mt-4 font-display text-4xl font-bold text-balance text-charcoal sm:text-6xl">
-            {site.fullName}
+            {settings.fullName}
           </h1>
           <p className="mt-5 font-display text-xl italic text-charcoal-muted sm:text-2xl">
-            &ldquo;{site.slogan}&rdquo;
+            &ldquo;{settings.slogan}&rdquo;
           </p>
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-charcoal-muted">
-            {site.org}-ийн санаачилгаар хэрэгжиж буй хүүхдийн хөгжил,
+            {settings.org}-ийн санаачилгаар хэрэгжиж буй хүүхдийн хөгжил,
             сэтгэлзүй, боловсролыг дэмжих төсөл.
           </p>
         </div>
@@ -157,7 +122,7 @@ export default async function AboutPage() {
             <ol className="divide-y divide-border border-y border-border">
               {camelPoints.map((p, i) => (
                 <li
-                  key={p.title}
+                  key={p.id}
                   className="grid grid-cols-[auto_1fr] gap-x-6 py-6"
                 >
                   <span className="font-display text-sm font-bold tracking-[0.2em] text-clay">
@@ -210,13 +175,13 @@ export default async function AboutPage() {
             <ol className="mt-5 divide-y divide-border border-y border-border">
               {goals.map((g, i) => (
                 <li
-                  key={i}
+                  key={g.id}
                   className="grid grid-cols-[auto_1fr] gap-x-6 py-5"
                 >
                   <span className="font-display text-sm font-bold tracking-[0.2em] text-clay">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="text-base text-charcoal">{g}</span>
+                  <span className="text-base text-charcoal">{g.body}</span>
                 </li>
               ))}
             </ol>
@@ -237,10 +202,10 @@ export default async function AboutPage() {
             <ul className="mt-8 grid divide-y divide-border border-y border-border sm:grid-cols-2 sm:divide-x sm:[&>li:nth-child(2n)]:border-l">
               {targets.map((t) => (
                 <li
-                  key={t}
+                  key={t.id}
                   className="py-4 text-base text-charcoal sm:px-6"
                 >
-                  {t}
+                  {t.body}
                 </li>
               ))}
             </ul>
@@ -261,13 +226,13 @@ export default async function AboutPage() {
             <ul className="mt-8 grid divide-y divide-border border-y border-border md:grid-cols-2 md:divide-x md:[&>li:nth-child(2n)]:border-l">
               {outcomes.map((o) => (
                 <li
-                  key={o}
+                  key={o.id}
                   className="flex items-baseline gap-3 py-5 md:px-6"
                 >
                   <span className="font-display text-sm font-bold tracking-[0.2em] text-clay">
                     ✓
                   </span>
-                  <span className="text-base text-charcoal">{o}</span>
+                  <span className="text-base text-charcoal">{o.body}</span>
                 </li>
               ))}
             </ul>
@@ -332,13 +297,13 @@ export default async function AboutPage() {
             Уриалга
           </p>
           <h2 className="mt-5 font-display text-3xl font-bold leading-tight text-balance text-white sm:text-5xl">
-            &ldquo;Нэг тэмээ — Нэг хүүхдийн ирээдүй.&rdquo;
+            &ldquo;Нэг тэмээ = Нэг хүүхдийн ирээдүй.&rdquo;
           </h2>
           <p className="mt-6 text-base text-white/70 sm:text-lg">
             Таны худалдан авсан бэлгэдлийн тэмээ хүүхдийн амьдралд итгэл ·
             боломж · халамж · гэрэл авчирна.
           </p>
-          <Button size="lg" className="mt-10" render={<Link href="/donate" />}>
+          <Button variant="cta" size="lg" className="mt-10" render={<Link href="/donate" />}>
             {cta.donate}
           </Button>
         </div>

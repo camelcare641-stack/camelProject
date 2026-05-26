@@ -1,12 +1,14 @@
 import Image from "next/image";
 import { DonateCTA } from "@/components/site/donate-cta";
+import { getAboutItems } from "@/features/about/queries";
 
 /**
  * §3 of the home funnel — the conversion heart.
- * Studio shot + three claim columns. Lifestyle shot slot is a placeholder
- * until the org delivers the photo (PROJECT.md §18).
+ * Studio shot + lifestyle shot (charm on a bag) + claim columns.
+ * The claims are the shared "camel point" content edited in /admin/about.
  */
-export function CamelSection() {
+export async function CamelSection() {
+  const { camelPoints } = await getAboutItems();
   return (
     <section className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -29,28 +31,22 @@ export function CamelSection() {
                 className="object-contain"
               />
             </div>
-            <div
-              aria-label="Тэмээний амьдралын ажиглалтын зураг — удахгүй"
-              className="flex aspect-square items-center justify-center border border-dashed border-border bg-paper px-4 text-center text-[11px] uppercase tracking-[0.1em] text-charcoal-muted"
-            >
-              [Lifestyle photo — coming soon]
+            <div className="relative aspect-square overflow-hidden">
+              <Image
+                src="/bagCamel-bg.png"
+                alt="Бэлгэдлийн тэмээ цүнхэнд зүүсэн нь — амьдралын хэрэглээ"
+                fill
+                sizes="(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw"
+                className="object-contain"
+              />
             </div>
           </div>
 
           {/* Claim columns */}
           <div className="grid gap-8 lg:col-span-6">
-            <Claim
-              title="Гар урлалын бүтээгдэхүүн"
-              body="Гараар урлан хийсэн цүнх, түлхүүрний оосор."
-            />
-            <Claim
-              title="25,000₮ = Нэг хүүхдийн боломж"
-              body="Нэг хүүхдийн сургалт, сэтгэлзүйн зөвлөгөө, хөгжлийн үйл ажиллагаа, хамгааллын үйлчилгээ, урлаг спортын оролцоонд хүрэх дэмжлэг."
-            />
-            <Claim
-              title="Зүүсэн хүний үнэ цэн"
-              body="Ижил зорилготой хүмүүсийн хүрээлэлд нэгдэнэ."
-            />
+            {camelPoints.map((p) => (
+              <Claim key={p.id} title={p.title ?? ""} body={p.body} />
+            ))}
 
             <p className="text-xs leading-relaxed text-charcoal-muted">
               25,000₮ ба түүнээс дээш хандивлавал бид таны тэмээг хүргэж болно.

@@ -69,6 +69,77 @@ export const testimonialSchema = z.object({
 });
 export type TestimonialInput = z.infer<typeof testimonialSchema>;
 
+// Editable site settings (bank/contact/org strings). Every field is optional —
+// the admin may leave any blank, and blank renders blank on the public site.
+const settingsField = z.string().trim().max(2000).optional().or(z.literal(""));
+export const siteSettingsSchema = z.object({
+  org_name: settingsField,
+  org_full_name: settingsField,
+  slogan: settingsField,
+  hook: settingsField,
+  description: settingsField,
+  bank_name: settingsField,
+  bank_holder: settingsField,
+  bank_account: settingsField,
+  bank_note: settingsField,
+  contact_phone: settingsField,
+  contact_email: settingsField,
+  contact_address: settingsField,
+});
+export type SiteSettingsInput = z.infer<typeof siteSettingsSchema>;
+/** The known settings keys, derived from the schema (single source of truth). */
+export const SITE_SETTINGS_KEYS = Object.keys(
+  siteSettingsSchema.shape,
+) as (keyof SiteSettingsInput)[];
+
+export const faqSchema = z.object({
+  question: z.string().trim().min(3, "Асуулт хэт богино байна.").max(300),
+  answer: z.string().trim().min(1, "Хариулт оруулна уу.").max(4000),
+  sort_order: z.number().int().min(0).max(10_000),
+});
+export type FaqInput = z.infer<typeof faqSchema>;
+
+// Canonical program shape (items as a list) — used by the server action / DB.
+export const programSchema = z.object({
+  code: z.string().trim().min(1, "Код оруулна уу.").max(10),
+  title: z.string().trim().min(2, "Гарчиг хэт богино байна.").max(200),
+  items: z.array(z.string().trim().min(1).max(200)).max(50),
+  sort_order: z.number().int().min(0).max(10_000),
+});
+export type ProgramInput = z.infer<typeof programSchema>;
+
+// Form variant: items edited as one-per-line text; transformed to an array on
+// submit before being handed to the action.
+export const programFormSchema = z.object({
+  code: z.string().trim().min(1, "Код оруулна уу.").max(10),
+  title: z.string().trim().min(2, "Гарчиг хэт богино байна.").max(200),
+  items: z.string().trim().min(1, "Дор хаяж нэг зүйл оруулна уу."),
+  sort_order: z.number().int().min(0).max(10_000),
+});
+export type ProgramFormInput = z.infer<typeof programFormSchema>;
+
+export const ABOUT_ITEM_KINDS = [
+  "goal",
+  "target",
+  "outcome",
+  "camel_point",
+] as const;
+
+// About-page list item. `title` is only meaningful (and required) for the
+// camel_point kind — the DB CHECK can't express that, so the schema enforces it.
+export const aboutItemSchema = z
+  .object({
+    kind: z.enum(ABOUT_ITEM_KINDS),
+    title: z.string().trim().max(200).optional().or(z.literal("")),
+    body: z.string().trim().min(1, "Текст оруулна уу.").max(1000),
+    sort_order: z.number().int().min(0).max(10_000),
+  })
+  .refine((v) => v.kind !== "camel_point" || !!v.title?.trim(), {
+    message: "“Тэмээ” цэгт гарчиг шаардлагатай.",
+    path: ["title"],
+  });
+export type AboutItemInput = z.infer<typeof aboutItemSchema>;
+
 // Admin manual donor entry (e.g. recording an offline / bank-transfer donor).
 export const donorAdminSchema = z.object({
   name: z.string().trim().min(2, errors.nameShort).max(100),

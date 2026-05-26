@@ -1,4 +1,5 @@
-import { bank, site } from "@/lib/content";
+import { site } from "@/lib/content";
+import { getSiteSettings } from "@/features/settings/queries";
 import { CopyButton } from "@/features/donate/components/copy-button";
 import { DonorForm } from "@/features/donate/components/donor-form";
 
@@ -6,7 +7,8 @@ import { DonorForm } from "@/features/donate/components/donor-form";
  * §5 of the home page funnel — also rendered as the body of the /donate
  * route. The bank-transfer fallback for donors who don't use QPay.
  */
-export function DonateSection() {
+export async function DonateSection() {
+  const { bank } = await getSiteSettings();
   return (
     <section id="donate" className="bg-paper py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">

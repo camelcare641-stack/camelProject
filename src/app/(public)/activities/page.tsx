@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { cta, site } from "@/lib/content";
 import { getNews } from "@/features/news/queries";
+import { getPrograms } from "@/features/activities/queries";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -12,53 +13,8 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
-const programs = [
-  {
-    code: "6.1",
-    title: "Хүүхэд хөгжлийн сургалт",
-    items: [
-      "Харилцааны ур чадвар",
-      "Багаар ажиллах",
-      "Манлайлал",
-      "Амьдрах ухаан",
-      "Ирээдүйн зорилго тодорхойлох",
-    ],
-  },
-  {
-    code: "6.2",
-    title: "Сэтгэлзүйн зөвлөгөө",
-    items: [
-      "Ганцаарчилсан зөвлөгөө",
-      "Бүлгийн уулзалт",
-      "Сэтгэлзүйн оношилгоо",
-      "Арт терапи",
-      "Хүүхэд сонсох үйлчилгээ",
-    ],
-  },
-  {
-    code: "6.3",
-    title: "Урлаг, хөгжлийн хөтөлбөр",
-    items: [
-      "Гар урлал",
-      "Зураг",
-      "Дуу хөгжим",
-      "Ном уншлага",
-      "Театр жүжигчилсэн тоглолт",
-    ],
-  },
-  {
-    code: "6.4",
-    title: "Эцэг эхийн хөтөлбөр",
-    items: [
-      "Хүүхэд хүмүүжлийн сургалт",
-      "Гэр бүлийн харилцаа",
-      "Хүүхдийн сэтгэлзүй ойлгох зөвлөгөө",
-    ],
-  },
-];
-
 export default async function ActivitiesPage() {
-  const news = await getNews(12);
+  const [news, programs] = await Promise.all([getNews(12), getPrograms()]);
 
   return (
     <>
@@ -78,7 +34,7 @@ export default async function ActivitiesPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <ul className="grid divide-y divide-border border-y border-border lg:grid-cols-2 lg:divide-x lg:[&>li:nth-child(2n)]:border-l">
             {programs.map((p) => (
-              <li key={p.code} className="py-10 lg:px-10">
+              <li key={p.id} className="py-10 lg:px-10">
                 <p className="font-display text-sm font-bold tracking-[0.2em] text-clay">
                   {p.code}
                 </p>
@@ -159,7 +115,7 @@ export default async function ActivitiesPage() {
           <p className="font-display text-xl italic text-charcoal sm:text-2xl">
             Хүүхэд бүрд хүргэхэд таны дэмжлэг хэрэгтэй.
           </p>
-          <Button size="lg" className="mt-7" render={<Link href="/donate" />}>
+          <Button variant="cta" size="lg" className="mt-7" render={<Link href="/donate" />}>
             {cta.donate}
           </Button>
         </div>

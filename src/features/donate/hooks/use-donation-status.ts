@@ -4,8 +4,14 @@ import { useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Subscribes to a single donation row and fires `onPaid` once the row's
- * status flips to 'paid'. Unsubscribes on cleanup.
+ * Watches a single donation row and fires `onPaid` once its status flips to
+ * 'paid'.
+ *
+ * We poll rather than subscribe over Realtime: migration 0006 revokes the
+ * blanket SELECT on `donations` from anon (column grants keep PII hidden),
+ * and Realtime's row authorization needs table-level SELECT — so anon never
+ * receives postgres_changes for this table. The column grant *does* allow anon
+ * to read (id, status), so a lightweight PK-indexed poll is the reliable path.
  */
 export function useDonationStatus(
   donationId: string | null,
@@ -14,26 +20,27 @@ export function useDonationStatus(
   useEffect(() => {
     if (!donationId) return;
     const supabase = createClient();
-    const channel = supabase
-      .channel(`donation:${donationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "donations",
-          filter: `id=eq.${donationId}`,
-        },
-        (payload) => {
-          const next = payload.new as { status?: string };
-          if (next.status === "paid") {
-            onPaid();
-          }
-        },
-      )
-      .subscribe();
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+
+    async function poll() {
+      const { data, error } = await supabase
+        .from("donations")
+        .select("status")
+        .eq("id", donationId)
+        .maybeSingle();
+      if (!active) return;
+      if (!error && data?.status === "paid") {
+        onPaid();
+        return;
+      }
+      timer = setTimeout(poll, 3000);
+    }
+
+    void poll();
     return () => {
-      supabase.removeChannel(channel);
+      active = false;
+      clearTimeout(timer);
     };
   }, [donationId, onPaid]);
 }

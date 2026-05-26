@@ -99,6 +99,69 @@ export async function getAdminTestimonials(): Promise<AdminTestimonial[]> {
   return (data ?? []) as AdminTestimonial[];
 }
 
+export type AdminFaq = {
+  id: string;
+  question: string;
+  answer: string;
+  sort_order: number;
+};
+
+export async function getAdminFaqs(): Promise<AdminFaq[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("faqs")
+    .select("id, question, answer, sort_order")
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("getAdminFaqs", error);
+    return [];
+  }
+  return (data ?? []) as AdminFaq[];
+}
+
+export type AdminProgram = {
+  id: string;
+  code: string;
+  title: string;
+  items: string[];
+  sort_order: number;
+};
+
+export async function getAdminPrograms(): Promise<AdminProgram[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("programs")
+    .select("id, code, title, items, sort_order")
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("getAdminPrograms", error);
+    return [];
+  }
+  return (data ?? []) as AdminProgram[];
+}
+
+export type AdminAboutItem = {
+  id: string;
+  kind: "goal" | "target" | "outcome" | "camel_point";
+  title: string | null;
+  body: string;
+  sort_order: number;
+};
+
+export async function getAdminAboutItems(): Promise<AdminAboutItem[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("about_items")
+    .select("id, kind, title, body, sort_order")
+    .order("kind", { ascending: true })
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("getAdminAboutItems", error);
+    return [];
+  }
+  return (data ?? []) as AdminAboutItem[];
+}
+
 export type AdminDonor = {
   id: string;
   name: string;
@@ -123,6 +186,9 @@ export type AdminStats = {
   news: number;
   partners: number;
   testimonials: number;
+  faqs: number;
+  programs: number;
+  aboutItems: number;
   donors: number;
   donorTotal: number;
   messages: number;
@@ -136,11 +202,14 @@ export async function getAdminStats(): Promise<AdminStats> {
   const headCount = (table: string) =>
     supabase.from(table).select("*", { count: "exact", head: true });
 
-  const [news, partners, testimonials, donorsRows, messages, donations, shipments] =
+  const [news, partners, testimonials, faqs, programs, aboutItems, donorsRows, messages, donations, shipments] =
     await Promise.all([
       headCount("news"),
       headCount("partners"),
       headCount("testimonials"),
+      headCount("faqs"),
+      headCount("programs"),
+      headCount("about_items"),
       supabase.from("donors").select("amount"),
       headCount("messages"),
       headCount("donations"),
@@ -160,6 +229,9 @@ export async function getAdminStats(): Promise<AdminStats> {
     news: news.count ?? 0,
     partners: partners.count ?? 0,
     testimonials: testimonials.count ?? 0,
+    faqs: faqs.count ?? 0,
+    programs: programs.count ?? 0,
+    aboutItems: aboutItems.count ?? 0,
     donors: donorsRows.data?.length ?? 0,
     donorTotal,
     messages: messages.count ?? 0,

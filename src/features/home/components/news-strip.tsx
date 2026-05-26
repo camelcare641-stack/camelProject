@@ -1,3 +1,6 @@
+"use client";
+
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { News } from "@/features/news/queries";
@@ -5,6 +8,19 @@ import { formatDate } from "@/lib/utils";
 import { cta } from "@/lib/content";
 
 export function NewsSection({ news }: { news: News[] }) {
+  const scrollerRef = useRef<HTMLUListElement>(null);
+
+  function scrollByCards(direction: 1 | -1) {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const firstCard = scroller.querySelector("li");
+    // Scroll by one card width (+ gap) when measurable, else fall back to ~80% viewport.
+    const step = firstCard
+      ? firstCard.getBoundingClientRect().width + 32
+      : scroller.clientWidth * 0.8;
+    scroller.scrollBy({ left: step * direction, behavior: "smooth" });
+  }
+
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -15,18 +31,47 @@ export function NewsSection({ news }: { news: News[] }) {
               Сүүлийн үеийн мэдээ
             </h2>
           </div>
-          <Link
-            href="/news"
-            className="text-sm font-semibold uppercase tracking-[0.12em] text-charcoal no-underline hover:text-clay hover:no-underline"
-          >
-            Бүх мэдээ →
-          </Link>
+          <div className="flex items-center gap-4">
+            {news.length > 0 && (
+              <div className="hidden items-center gap-2 lg:flex">
+                <button
+                  type="button"
+                  onClick={() => scrollByCards(-1)}
+                  aria-label="Өмнөх мэдээ"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-charcoal transition-colors hover:border-clay hover:text-clay"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-5 w-5">
+                    <path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollByCards(1)}
+                  aria-label="Дараах мэдээ"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-charcoal transition-colors hover:border-clay hover:text-clay"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-5 w-5">
+                    <path d="m9 18 6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            <Link
+              href="/news"
+              className="text-sm font-semibold uppercase tracking-[0.12em] text-charcoal no-underline hover:text-clay hover:no-underline"
+            >
+              Бүх мэдээ →
+            </Link>
+          </div>
         </div>
 
         {news.length === 0 ? (
           <p className="mt-8 text-charcoal-muted">Удахгүй…</p>
         ) : (
-          <ul className="mt-8 flex snap-x snap-mandatory gap-8 overflow-x-auto pb-4 [scrollbar-width:thin]">
+          <ul
+            ref={scrollerRef}
+            className="mt-8 flex snap-x snap-mandatory gap-8 overflow-x-auto pb-4 [scrollbar-width:thin]"
+          >
             {news.map((n) => (
               <li
                 key={n.id}

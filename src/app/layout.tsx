@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Alegreya, Manrope } from "next/font/google";
-import { Header } from "@/components/site/header";
 import { Toaster } from "@/components/ui/sonner";
 import { site } from "@/lib/content";
 import "./globals.css";
@@ -48,7 +47,6 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Гол агуулга руу шилжих
         </a>
-        <Header />
         <main id="main" className="flex flex-1 flex-col">
           {children}
         </main>

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { cta, site } from "@/lib/content";
+import { cta } from "@/lib/content";
+import { getSiteSettings } from "@/features/settings/queries";
 
-export function AboutSummary() {
+export async function AboutSummary() {
+  const settings = await getSiteSettings();
   return (
     <section className="bg-paper py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -32,7 +34,7 @@ export function AboutSummary() {
           <div className="lg:order-2">
             <p className="eyebrow">Бидний шийдэл</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-balance text-charcoal sm:text-4xl">
-              {site.fullName}
+              {settings.fullName}
             </h2>
             <p className="mt-5 text-base leading-relaxed text-charcoal-muted">
               Гар урлалын <span className="text-charcoal">&ldquo;Тэмээ&rdquo;</span>{" "}
@@ -48,7 +50,7 @@ export function AboutSummary() {
               </dd>
             </dl>
             <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <Button size="lg" render={<Link href="/donate" />}>
+              <Button variant="cta" size="lg" render={<Link href="/donate" />}>
                 {cta.donate}
               </Button>
               <Link

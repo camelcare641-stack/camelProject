@@ -1,18 +1,21 @@
 import Image from "next/image";
 import { DonateCTA } from "@/components/site/donate-cta";
 import { getCampaignStats } from "@/features/donate/queries";
+import { getSiteSettings } from "@/features/settings/queries";
 import { formatMNT } from "@/lib/utils";
-import { site } from "@/lib/content";
 
 export async function Hero() {
-  const stats = await getCampaignStats();
+  const [stats, settings] = await Promise.all([
+    getCampaignStats(),
+    getSiteSettings(),
+  ]);
 
   return (
     <section className="bg-white">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-12 sm:px-6 lg:grid-cols-12 lg:gap-16 lg:pt-24 lg:pb-20">
         {/* Story */}
         <div className="lg:col-span-7">
-          <p className="eyebrow">{site.org}</p>
+          <p className="eyebrow">{settings.org}</p>
           <h1 className="mt-5 font-display text-[2.5rem] font-bold leading-[1.05] tracking-tight text-balance text-charcoal sm:text-[3.25rem] lg:text-[4.25rem]">
             Нэг тэмээ,<br />
             нэг хүүхдийн ирээдүй.

@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { contactInfo, nav, site } from "@/lib/content";
+import { nav, site } from "@/lib/content";
+import { getSiteSettings } from "@/features/settings/queries";
 
-export function Footer() {
+export async function Footer() {
+  const settings = await getSiteSettings();
   return (
     <footer className=" border-t border-border bg-paper text-charcoal">
       <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 md:grid-cols-12">
@@ -19,14 +21,14 @@ export function Footer() {
               <p className="font-display text-lg font-bold text-charcoal">
                 {site.name}
               </p>
-              <p className="text-sm text-charcoal-muted">{site.org}</p>
+              <p className="text-sm text-charcoal-muted">{settings.org}</p>
             </div>
           </div>
           <p className="mt-5 font-display text-lg italic text-charcoal">
-            &ldquo;{site.slogan}&rdquo;
+            &ldquo;{settings.slogan}&rdquo;
           </p>
           <p className="mt-3 max-w-md text-sm leading-relaxed text-charcoal-muted">
-            {site.description}
+            {settings.description}
           </p>
         </div>
 
@@ -63,19 +65,19 @@ export function Footer() {
           <ul className="mt-4 space-y-2.5 text-sm text-charcoal">
             <li>
               <span className="text-charcoal-muted">Утас. </span>
-              {contactInfo.phone}
+              {settings.contactInfo.phone}
             </li>
             <li>
               <span className="text-charcoal-muted">И-мэйл. </span>
-              {contactInfo.email}
+              {settings.contactInfo.email}
             </li>
             <li>
               <span className="text-charcoal-muted">Хаяг. </span>
-              {contactInfo.address}
+              {settings.contactInfo.address}
             </li>
           </ul>
 
-          © {new Date().getFullYear()} {site.org}. Бүх эрх хуулиар хамгаалагдсан.
+          © {new Date().getFullYear()} {settings.org}. Бүх эрх хуулиар хамгаалагдсан.
 
         </div>
       </div>

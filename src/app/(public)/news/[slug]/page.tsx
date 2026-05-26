@@ -86,7 +86,7 @@ export default async function NewsDetailPage({
           <p className="font-display text-xl italic text-charcoal sm:text-2xl">
             Энэхүү үйл ажиллагааг үргэлжлүүлэхэд таны дэмжлэг хэрэгтэй.
           </p>
-          <Button size="lg" className="mt-6" render={<Link href="/donate" />}>
+          <Button variant="cta" size="lg" className="mt-6" render={<Link href="/donate" />}>
             {cta.donate}
           </Button>
         </div>

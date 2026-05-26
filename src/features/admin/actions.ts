@@ -12,12 +12,20 @@ import {
   testimonialSchema,
   donorAdminSchema,
   donationUpdateSchema,
+  siteSettingsSchema,
+  faqSchema,
+  programSchema,
+  aboutItemSchema,
   type AdminLoginInput,
   type NewsInput,
   type PartnerInput,
   type TestimonialInput,
   type DonorAdminInput,
   type DonationUpdateInput,
+  type SiteSettingsInput,
+  type FaqInput,
+  type ProgramInput,
+  type AboutItemInput,
 } from "@/lib/validations";
 
 /**
@@ -142,6 +150,244 @@ export async function deleteNews(id: string): Promise<ActionResult> {
   revalidatePath("/news");
   revalidatePath("/");
   revalidatePath("/admin");
+  return { ok: true, message: "Устгагдлаа." };
+}
+
+// ── Site settings (bank / contact / org strings) ─────────────────────────────
+
+export async function updateSiteSettings(
+  input: SiteSettingsInput,
+): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const parsed = siteSettingsSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+
+  // Upsert every known key so blanks are persisted as blanks (empty-means-empty).
+  const rows = Object.entries(parsed.data).map(([key, value]) => ({
+    key,
+    value: value ?? "",
+    updated_at: new Date().toISOString(),
+  }));
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("site_settings")
+    .upsert(rows, { onConflict: "key" });
+  if (error) {
+    console.error("updateSiteSettings", error);
+    return { ok: false, message: "Хадгалахад алдаа гарлаа." };
+  }
+  revalidatePath("/");
+  revalidatePath("/about");
+  revalidatePath("/contact");
+  revalidatePath("/donate");
+  revalidatePath("/admin/settings");
+  return { ok: true, message: "Шинэчлэгдлээ." };
+}
+
+// ── FAQ ──────────────────────────────────────────────────────────────────────
+
+function revalidateFaqs() {
+  revalidatePath("/contact");
+  revalidatePath("/admin/faqs");
+}
+
+export async function createFaq(input: FaqInput): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const parsed = faqSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("faqs").insert({
+    question: parsed.data.question,
+    answer: parsed.data.answer,
+    sort_order: parsed.data.sort_order,
+  });
+  if (error) {
+    console.error("createFaq", error);
+    return { ok: false, message: "Хадгалахад алдаа гарлаа." };
+  }
+  revalidateFaqs();
+  return { ok: true, message: "Асуулт нэмэгдлээ." };
+}
+
+export async function updateFaq(
+  id: string,
+  input: FaqInput,
+): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const parsed = faqSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("faqs")
+    .update({
+      question: parsed.data.question,
+      answer: parsed.data.answer,
+      sort_order: parsed.data.sort_order,
+    })
+    .eq("id", id);
+  if (error) {
+    console.error("updateFaq", error);
+    return { ok: false, message: "Хадгалахад алдаа гарлаа." };
+  }
+  revalidateFaqs();
+  return { ok: true, message: "Шинэчлэгдлээ." };
+}
+
+export async function deleteFaq(id: string): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("faqs").delete().eq("id", id);
+  if (error) {
+    console.error("deleteFaq", error);
+    return { ok: false, message: "Устгахад алдаа гарлаа." };
+  }
+  revalidateFaqs();
+  return { ok: true, message: "Устгагдлаа." };
+}
+
+// ── Programs (activities) ────────────────────────────────────────────────────
+
+function revalidatePrograms() {
+  revalidatePath("/activities");
+  revalidatePath("/admin/programs");
+}
+
+export async function createProgram(input: ProgramInput): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const parsed = programSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("programs").insert({
+    code: parsed.data.code,
+    title: parsed.data.title,
+    items: parsed.data.items,
+    sort_order: parsed.data.sort_order,
+  });
+  if (error) {
+    console.error("createProgram", error);
+    return { ok: false, message: "Хадгалахад алдаа гарлаа." };
+  }
+  revalidatePrograms();
+  return { ok: true, message: "Хөтөлбөр нэмэгдлээ." };
+}
+
+export async function updateProgram(
+  id: string,
+  input: ProgramInput,
+): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const parsed = programSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("programs")
+    .update({
+      code: parsed.data.code,
+      title: parsed.data.title,
+      items: parsed.data.items,
+      sort_order: parsed.data.sort_order,
+    })
+    .eq("id", id);
+  if (error) {
+    console.error("updateProgram", error);
+    return { ok: false, message: "Хадгалахад алдаа гарлаа." };
+  }
+  revalidatePrograms();
+  return { ok: true, message: "Шинэчлэгдлээ." };
+}
+
+export async function deleteProgram(id: string): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("programs").delete().eq("id", id);
+  if (error) {
+    console.error("deleteProgram", error);
+    return { ok: false, message: "Устгахад алдаа гарлаа." };
+  }
+  revalidatePrograms();
+  return { ok: true, message: "Устгагдлаа." };
+}
+
+// ── About items (goals / targets / outcomes / camel points) ──────────────────
+
+function revalidateAboutItems() {
+  revalidatePath("/about");
+  revalidatePath("/"); // home camel-section reads camel points
+  revalidatePath("/admin/about");
+}
+
+export async function createAboutItem(
+  input: AboutItemInput,
+): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const parsed = aboutItemSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("about_items").insert({
+    kind: parsed.data.kind,
+    title: parsed.data.title || null,
+    body: parsed.data.body,
+    sort_order: parsed.data.sort_order,
+  });
+  if (error) {
+    console.error("createAboutItem", error);
+    return { ok: false, message: "Хадгалахад алдаа гарлаа." };
+  }
+  revalidateAboutItems();
+  return { ok: true, message: "Нэмэгдлээ." };
+}
+
+export async function updateAboutItem(
+  id: string,
+  input: AboutItemInput,
+): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const parsed = aboutItemSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("about_items")
+    .update({
+      kind: parsed.data.kind,
+      title: parsed.data.title || null,
+      body: parsed.data.body,
+      sort_order: parsed.data.sort_order,
+    })
+    .eq("id", id);
+  if (error) {
+    console.error("updateAboutItem", error);
+    return { ok: false, message: "Хадгалахад алдаа гарлаа." };
+  }
+  revalidateAboutItems();
+  return { ok: true, message: "Шинэчлэгдлээ." };
+}
+
+export async function deleteAboutItem(id: string): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("about_items").delete().eq("id", id);
+  if (error) {
+    console.error("deleteAboutItem", error);
+    return { ok: false, message: "Устгахад алдаа гарлаа." };
+  }
+  revalidateAboutItems();
   return { ok: true, message: "Устгагдлаа." };
 }
 

@@ -20,6 +20,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-clay text-white hover:bg-clay-dark",
+        cta: "bg-teal text-white hover:bg-teal-dark focus-visible:border-teal focus-visible:ring-teal/30",
         outline:
           "border-border text-charcoal hover:border-charcoal hover:bg-paper",
         secondary:

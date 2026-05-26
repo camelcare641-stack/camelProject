@@ -255,7 +255,7 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
                   </p>
                 )}
 
-                <Button type="submit" size="lg" disabled={pending} className="w-full">
+                <Button type="submit" variant="cta" size="lg" disabled={pending} className="w-full">
                   {pending ? cta.generating : `${cta.generateQr} — ${formatMNT(amount)}`}
                 </Button>
 

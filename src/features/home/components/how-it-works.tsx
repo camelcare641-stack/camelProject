@@ -33,7 +33,7 @@ export function HowItWorks() {
         </ol>
 
         <div className="mt-10">
-          <Button size="lg" render={<Link href="/donate" />}>
+          <Button variant="cta" size="lg" render={<Link href="/donate" />}>
             {cta.donate}
           </Button>
         </div>

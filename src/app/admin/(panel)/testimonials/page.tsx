@@ -10,8 +10,8 @@ export default async function AdminTestimonialsPage() {
   const items = await getAdminTestimonials();
 
   return (
-    <section className="py-12 sm:py-16">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
           <div>
             <p className="eyebrow">Сэтгэгдэл</p>

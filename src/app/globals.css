@@ -17,6 +17,11 @@
   --clay:            #9C4F22;
   --clay-dark:       #7E3F1A;
   --clay-tint:       #F3E6DC;
+  /* Teal is reserved exclusively for the donate CTA / primary action, so it
+   * stands apart from clay (identity) headings and links. */
+  --teal:            #0F6E56;
+  --teal-dark:       #0A5141;
+  --teal-tint:       #E1F0EB;
   --charcoal:        #1F1B17;
   --charcoal-muted:  #6E6962;
   --border-strong:   #D6CFC0;
@@ -53,6 +58,9 @@
   --color-clay:            var(--clay);
   --color-clay-dark:       var(--clay-dark);
   --color-clay-tint:       var(--clay-tint);
+  --color-teal:            var(--teal);
+  --color-teal-dark:       var(--teal-dark);
+  --color-teal-tint:       var(--teal-tint);
   --color-charcoal:        var(--charcoal);
   --color-charcoal-muted:  var(--charcoal-muted);
   --color-border-strong:   var(--border-strong);

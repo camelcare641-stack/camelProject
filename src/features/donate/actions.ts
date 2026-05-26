@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createInvoice } from "@/lib/qpay/client";
 import {
   donorSchema,
@@ -83,6 +84,13 @@ export async function createDonationInvoice(
     return { ok: false, message: "Хандивыг үүсгэхэд алдаа гарлаа." };
   }
 
+  // The anon role can INSERT a pending donation (RLS insert policy) but has no
+  // UPDATE policy on `donations` — an anon update is silently denied (0 rows,
+  // no error). Persist the invoice id and any failure state through the
+  // service-role client, which bypasses RLS. Without this the callback never
+  // sees a qpay_invoice_id and every payment stays pending forever.
+  const admin = createAdminClient();
+
   try {
     const invoice = await createInvoice({
       invoiceCode: process.env.QPAY_INVOICE_CODE!,
@@ -93,10 +101,14 @@ export async function createDonationInvoice(
       callbackUrl: `${process.env.QPAY_CALLBACK_URL}?donation_id=${donationRow.id}`,
     });
 
-    await supabase
+    const { error: updateError } = await admin
       .from("donations")
       .update({ qpay_invoice_id: invoice.invoice_id })
       .eq("id", donationRow.id);
+    if (updateError) {
+      console.error("createDonationInvoice qpay_invoice_id update", updateError);
+      return { ok: false, message: "Хандивыг үүсгэхэд алдаа гарлаа." };
+    }
 
     return {
       ok: true,
@@ -109,7 +121,8 @@ export async function createDonationInvoice(
   } catch (err) {
     console.error("createDonationInvoice qpay", err);
     // Mark the row as failed so it doesn't sit as pending forever.
-    await supabase
+    // Service-role client: anon has no UPDATE policy on donations.
+    await admin
       .from("donations")
       .update({ status: "failed" })
       .eq("id", donationRow.id);

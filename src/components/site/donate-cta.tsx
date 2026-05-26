@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { cta } from "@/lib/content";
 
 type Props = {
-  variant?: "default" | "outline" | "ghost";
+  variant?: "cta" | "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "xl";
   className?: string;
   label?: string;
@@ -21,7 +21,7 @@ type Props = {
  * to /donate (or scrolls to #donate when already on the home page).
  */
 export function DonateCTA({
-  variant = "default",
+  variant = "cta",
   size = "default",
   className,
   label,

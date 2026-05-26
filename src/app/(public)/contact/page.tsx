@@ -1,37 +1,22 @@
 import type { Metadata } from "next";
 import { ContactForm } from "@/features/contact/components/contact-form";
 import { FAQ } from "@/features/contact/components/faq";
-import { contactInfo, site } from "@/lib/content";
+import { getFaqs } from "@/features/contact/queries";
+import { getSiteSettings } from "@/features/settings/queries";
+import { site } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Холбоо барих",
   description: site.description,
 };
 
-const faqs = [
-  {
-    q: "Нэг тэмээ хэдэн төгрөг вэ?",
-    a: "Нэг тэмээ 25,000₮. Энэ нь нэг хүүхдийн боловсрол, сэтгэлзүйн зөвлөгөө, халамжийн боломжтой тэнцэх хандив юм.",
-  },
-  {
-    q: "Хандив хаашаа очдог вэ?",
-    a: 'Бүх хандив "Дадал Тэнцвэр" ТББ-ын дансанд орж, "ТЭМЭЭ" хүүхэд хөгжлийн төслийн сургалт, сэтгэлзүйн зөвлөгөө, халамжийн үйл ажиллагаанд зарцуулагдана.',
-  },
-  {
-    q: "Яаж хандив өгөх вэ?",
-    a: "/donate хуудаснаас дансаар шилжүүлэг хийгээд, нэрээ бүртгүүлснээр хандивлагчдын жагсаалтад нэмэгдэнэ. Гүйлгээний утганд нэр + утсаа бичээрэй.",
-  },
-  {
-    q: "Сайн дурын ажилтан болж болох уу?",
-    a: "Болно. Холбоо барих маягтаар бидэнтэй холбогдвол сайн дурын хөтөлбөрийн талаар дэлгэрэнгүй мэдээлэл өгөх болно.",
-  },
-  {
-    q: "Байгууллагын түншлэлд хэрхэн оролцох вэ?",
-    a: "Корпорацийн нийгмийн хариуцлагын (CSR) хүрээнд хамтран ажиллах, ивээн тэтгэх боломжтой. Сэдвийг 'Хамтын ажиллагаа' гэж тэмдэглэн зурвас илгээгээрэй.",
-  },
-];
+export const revalidate = 60;
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const [settings, faqRows] = await Promise.all([getSiteSettings(), getFaqs()]);
+  const { contactInfo } = settings;
+  const faqs = faqRows.map((f) => ({ q: f.question, a: f.answer }));
+
   return (
     <>
       <section className="border-b border-border bg-white">
@@ -76,7 +61,7 @@ export default function ContactPage() {
               </div>
             </dl>
             <p className="mt-8 font-display text-lg italic text-charcoal-muted">
-              &ldquo;{site.slogan}&rdquo;
+              &ldquo;{settings.slogan}&rdquo;
             </p>
           </aside>
 

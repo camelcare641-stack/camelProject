@@ -10,8 +10,8 @@ export default async function AdminDonorsPage() {
   const donors = await getAdminDonors();
 
   return (
-    <section className="py-12 sm:py-16">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl">
         <div className="border-b border-border pb-5">
           <p className="eyebrow">Хандивлагч</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-charcoal sm:text-4xl">
