@@ -42,57 +42,72 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+/**
+ * POST to a QPay endpoint with the cached bearer token. If the token was
+ * rejected (401) — e.g. it expired earlier than `expires_in` claimed, or this
+ * serverless instance held a stale token — clear the cache, re-auth, and retry
+ * exactly once before giving up.
+ */
+async function authedPost(
+  path: string,
+  body: unknown,
+  label: string,
+): Promise<Response> {
+  const send = async () => {
+    const token = await getAccessToken();
+    return fetch(`${BASE_URL}${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+  };
+
+  let res = await send();
+  if (res.status === 401) {
+    cachedToken = null; // force a fresh token, then retry once
+    res = await send();
+  }
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`QPay ${label} failed: ${res.status} ${text}`);
+  }
+  return res;
+}
+
 export async function createInvoice(
   input: CreateInvoiceInput,
 ): Promise<QPayInvoiceResponse> {
-  const token = await getAccessToken();
-  const res = await fetch(`${BASE_URL}/invoice`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const res = await authedPost(
+    "/invoice",
+    {
       invoice_code: input.invoiceCode,
       sender_invoice_no: input.senderInvoiceNo,
       invoice_receiver_code: input.invoiceReceiverCode,
       invoice_description: input.description,
       amount: input.amount,
       callback_url: input.callbackUrl,
-    }),
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`QPay createInvoice failed: ${res.status} ${body}`);
-  }
-
+    },
+    "createInvoice",
+  );
   return (await res.json()) as QPayInvoiceResponse;
 }
 
 export async function checkInvoicePayment(
   invoiceId: string,
 ): Promise<QPayPaymentCheckResponse> {
-  const token = await getAccessToken();
-  const res = await fetch(`${BASE_URL}/payment/check`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const res = await authedPost(
+    "/payment/check",
+    {
       object_type: "INVOICE",
       object_id: invoiceId,
       offset: { page_number: 1, page_limit: 100 },
-    }),
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`QPay checkPayment failed: ${res.status} ${body}`);
-  }
-
+    },
+    "checkPayment",
+  );
   return (await res.json()) as QPayPaymentCheckResponse;
 }
