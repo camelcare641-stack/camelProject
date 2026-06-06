@@ -1,18 +1,21 @@
-import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkInvoicePayment } from "@/lib/qpay/client";
 import { sendThankYouEmail } from "@/lib/email/send-thank-you";
 import { site } from "@/lib/content";
 
-// QPay v2 calls this URL after a payment. We treat the callback as a notice
-// only — the source of truth is checkInvoicePayment, which we call before
-// flipping the donation to `paid`. Idempotent via `.eq("status", "pending")`.
+// QPay v2 requires the callback response to be exactly HTTP 200 with body
+// "SUCCESS" — any other shape is treated as a failed delivery and retried.
+// The actual paid/not-paid truth comes from checkInvoicePayment below, so we
+// always ACK to QPay and log internal errors instead of surfacing them.
+const ok = () => new Response("SUCCESS", { status: 200 });
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const donationId = searchParams.get("donation_id");
 
   if (!donationId) {
-    return NextResponse.json({ ok: false, error: "missing donation_id" }, { status: 400 });
+    console.error("qpay callback: missing donation_id");
+    return ok();
   }
 
   const supabase = createAdminClient();
@@ -25,16 +28,17 @@ export async function GET(req: Request) {
 
   if (fetchError || !donation) {
     console.error("qpay callback: donation not found", donationId, fetchError);
-    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    return ok();
   }
 
   if (donation.status !== "pending") {
     // Already processed — idempotent no-op.
-    return NextResponse.json({ ok: true, already: true });
+    return ok();
   }
 
   if (!donation.qpay_invoice_id) {
-    return NextResponse.json({ ok: false, error: "no invoice id" }, { status: 400 });
+    console.error("qpay callback: no invoice id", donationId);
+    return ok();
   }
 
   // Verify with QPay before trusting the callback.
@@ -43,11 +47,11 @@ export async function GET(req: Request) {
     const check = await checkInvoicePayment(donation.qpay_invoice_id);
     payment = check.rows.find((r) => r.payment_status === "PAID");
     if (!payment) {
-      return NextResponse.json({ ok: false, error: "no paid payment" }, { status: 200 });
+      return ok();
     }
   } catch (err) {
     console.error("qpay callback: checkInvoicePayment failed", err);
-    return NextResponse.json({ ok: false, error: "verify failed" }, { status: 500 });
+    return ok();
   }
 
   const paidAmount = Number(payment.payment_amount);
@@ -73,12 +77,12 @@ export async function GET(req: Request) {
 
   if (updateError) {
     console.error("qpay callback: update failed", updateError);
-    return NextResponse.json({ ok: false, error: "update failed" }, { status: 500 });
+    return ok();
   }
 
   if (!updated) {
     // Someone else already flipped it. No-op.
-    return NextResponse.json({ ok: true, already: true });
+    return ok();
   }
 
   // Mirror into `donors` so the marquee + SupportBar pick it up immediately.
@@ -108,7 +112,7 @@ export async function GET(req: Request) {
     console.error("qpay callback: email send failed", err);
   }
 
-  return NextResponse.json({ ok: true });
+  return ok();
 }
 
 // QPay may also POST. Treat the same way.

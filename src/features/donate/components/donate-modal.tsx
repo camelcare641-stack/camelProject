@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createDonationInvoice } from "@/features/donate/actions";
+import { createDonationInvoice, checkDonationPayment } from "@/features/donate/actions";
 import { useDonationStatus } from "@/features/donate/hooks/use-donation-status";
 import { donationSchema, type DonationInput } from "@/lib/validations";
 import { cta, modal, site } from "@/lib/content";
@@ -48,6 +48,8 @@ type Props = {
 export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
   const [state, setState] = useState<ModalState>({ kind: "form" });
   const [pending, startTransition] = useTransition();
+  const [checking, startChecking] = useTransition();
+  const [checkNotice, setCheckNotice] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
 
   const form = useForm<DonationInput>({
@@ -73,6 +75,24 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
 
   useDonationStatus(state.kind === "pending" ? state.donationId : null, onPaid);
 
+  function onCheckNow() {
+    if (state.kind !== "pending") return;
+    const donationId = state.donationId;
+    setCheckNotice(null);
+    startChecking(async () => {
+      const result = await checkDonationPayment(donationId);
+      if (!result.ok) {
+        setCheckNotice(result.message);
+        return;
+      }
+      if (result.status === "paid") {
+        onPaid();
+        return;
+      }
+      setCheckNotice(modal.stillPending);
+    });
+  }
+
   function onSubmit(values: DonationInput) {
     setServerError(null);
     startTransition(async () => {
@@ -96,6 +116,7 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
       setTimeout(() => {
         setState({ kind: "form" });
         setServerError(null);
+        setCheckNotice(null);
         form.reset();
       }, 200);
     }
@@ -140,8 +161,8 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
                           type="number"
                           inputMode="numeric"
                           autoComplete="off"
-                          min={1000}
-                          step={1000}
+                          min={1}
+                          step={1}
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                           className="h-12 text-lg font-semibold"
@@ -303,6 +324,20 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
                 <Loader2 className="size-4 animate-spin" />
                 {modal.waiting}
               </p>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onCheckNow}
+                disabled={checking}
+              >
+                {checking ? modal.checking : modal.checkNow}
+              </Button>
+
+              {checkNotice && (
+                <p className="text-center text-xs text-charcoal-muted">{checkNotice}</p>
+              )}
             </div>
           </>
         )}

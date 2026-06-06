@@ -30,7 +30,7 @@ export type DonorInput = z.infer<typeof donorSchema>;
 
 // Modal donation form. Phone is required at the 25,000₮+ threshold (server-side enforced).
 export const donationSchema = z.object({
-  amount: z.number().int().min(1000, "Хамгийн багадаа 1,000₮ хандивлана уу.").max(100_000_000),
+  amount: z.number().int().min(1, "Хамгийн багадаа 1₮ хандивлана уу.").max(100_000_000),
   name: z.string().trim().min(2, errors.nameShort).max(100),
   email: z.string().trim().email("И-мэйл хаяг буруу байна.").max(200),
   phone: z.string().trim().max(50).optional().or(z.literal("")),

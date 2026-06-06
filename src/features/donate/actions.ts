@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createInvoice } from "@/lib/qpay/client";
+import { createInvoice, checkInvoicePayment } from "@/lib/qpay/client";
 import {
   donorSchema,
   donationSchema,
@@ -131,4 +131,74 @@ export async function createDonationInvoice(
       message: "QPay-тай холбогдоход алдаа гарлаа. Дансаар шилжүүлэх боломжтой.",
     };
   }
+}
+
+// Manual "check payment" — donor-triggered pull, mirrors the callback's flip
+// logic so a missed/delayed webhook doesn't strand the donation in `pending`.
+// Idempotent via `.eq("status", "pending")`. No thank-you email here; the
+// callback path owns email side-effects to avoid double-sends.
+export async function checkDonationPayment(
+  donationId: string,
+): Promise<
+  | { ok: true; status: "paid" | "pending" }
+  | { ok: false; message: string }
+> {
+  const admin = createAdminClient();
+
+  const { data: donation, error: fetchError } = await admin
+    .from("donations")
+    .select("id, status, amount, name, qpay_invoice_id, anonymous")
+    .eq("id", donationId)
+    .single();
+
+  if (fetchError || !donation) {
+    return { ok: false, message: "Хандив олдсонгүй." };
+  }
+  if (donation.status === "paid") return { ok: true, status: "paid" };
+  if (donation.status !== "pending") {
+    return { ok: false, message: "Хандивыг шалгах боломжгүй." };
+  }
+  if (!donation.qpay_invoice_id) {
+    return { ok: false, message: "Нэхэмжлэх алга." };
+  }
+
+  let payment;
+  try {
+    const check = await checkInvoicePayment(donation.qpay_invoice_id);
+    payment = check.rows.find((r) => r.payment_status === "PAID");
+  } catch (err) {
+    console.error("checkDonationPayment", err);
+    return { ok: false, message: "QPay-аас баталгаажуулж чадсангүй." };
+  }
+  if (!payment) return { ok: true, status: "pending" };
+
+  const { data: updated, error: updateError } = await admin
+    .from("donations")
+    .update({
+      status: "paid",
+      qpay_payment_id: payment.payment_id,
+      paid_at: payment.payment_date ?? new Date().toISOString(),
+    })
+    .eq("id", donation.id)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
+
+  if (updateError) {
+    console.error("checkDonationPayment update", updateError);
+    return { ok: false, message: "Бүртгэхэд алдаа гарлаа." };
+  }
+
+  if (updated) {
+    const displayName = donation.anonymous ? "Анонимоор хандивласан" : donation.name;
+    const { error: donorError } = await admin
+      .from("donors")
+      .insert({ name: displayName, amount: donation.amount });
+    if (donorError) {
+      console.error("checkDonationPayment donors mirror", donorError);
+      // Non-fatal; donation is still marked paid.
+    }
+  }
+
+  return { ok: true, status: "paid" };
 }
