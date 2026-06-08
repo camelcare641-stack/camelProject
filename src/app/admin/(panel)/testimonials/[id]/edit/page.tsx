@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TestimonialForm } from "@/features/admin/components/testimonial-form";
-import { getAdminTestimonials } from "@/features/admin/queries";
+import { getAdminTestimonialById } from "@/features/admin/queries";
 
 export const metadata: Metadata = {
   title: "Сэтгэгдэл засах",
@@ -17,7 +17,7 @@ export default async function EditTestimonialPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const item = (await getAdminTestimonials()).find((t) => t.id === id);
+  const item = await getAdminTestimonialById(id);
   if (!item) notFound();
 
   return (

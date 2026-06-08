@@ -41,6 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="mn"
+      data-scroll-behavior="smooth"
       className={`${alegreya.variable} ${manrope.variable}`}
     >
       <body className="flex min-h-screen flex-col bg-white text-charcoal">

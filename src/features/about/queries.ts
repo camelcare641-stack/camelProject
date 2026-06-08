@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { fetchRows } from "@/lib/supabase/fetch";
 
 export type Partner = {
   id: string;
@@ -8,17 +9,10 @@ export type Partner = {
   website_url: string | null;
 };
 
-export async function getPartners(): Promise<Partner[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("partners")
-    .select("id, name, logo_url, website_url")
-    .order("sort_order", { ascending: true });
-  if (error) {
-    console.error("getPartners", error);
-    return [];
-  }
-  return (data ?? []) as Partner[];
+export function getPartners(): Promise<Partner[]> {
+  return fetchRows<Partner>("partners", "id, name, logo_url, website_url", {
+    orderBy: "sort_order",
+  });
 }
 
 export type AboutItem = { id: string; title: string | null; body: string };

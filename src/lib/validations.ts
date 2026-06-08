@@ -92,6 +92,43 @@ export const SITE_SETTINGS_KEYS = Object.keys(
   siteSettingsSchema.shape,
 ) as (keyof SiteSettingsInput)[];
 
+// Editable home-page content (headings, body, image URLs). Stored in the same
+// `site_settings` table under `home_*` keys; every field is optional/blank-allowed,
+// matching the empty-means-empty behaviour of the other settings.
+export const homeContentSchema = z.object({
+  home_hero_title: settingsField,
+  home_hero_subtitle: settingsField,
+  home_hero_image_url: settingsField,
+  home_problem_eyebrow: settingsField,
+  home_problem_title: settingsField,
+  home_problem_body: settingsField,
+  home_problem_image_url: settingsField,
+  home_solution_eyebrow: settingsField,
+  home_solution_body: settingsField,
+  home_solution_price: settingsField,
+  home_solution_price_caption: settingsField,
+  home_solution_image_url: settingsField,
+  home_camel_eyebrow: settingsField,
+  home_camel_title: settingsField,
+  home_camel_note: settingsField,
+  home_camel_image_1_url: settingsField,
+  home_camel_image_2_url: settingsField,
+  home_news_eyebrow: settingsField,
+  home_news_title: settingsField,
+  home_testimonials_eyebrow: settingsField,
+  home_testimonials_title: settingsField,
+  home_donate_eyebrow: settingsField,
+  home_donate_title: settingsField,
+  home_donate_intro: settingsField,
+  home_qr_image_url: settingsField,
+  home_qr_caption: settingsField,
+});
+export type HomeContentInput = z.infer<typeof homeContentSchema>;
+/** The known home-content keys, derived from the schema (single source of truth). */
+export const HOME_CONTENT_KEYS = Object.keys(
+  homeContentSchema.shape,
+) as (keyof HomeContentInput)[];
+
 export const faqSchema = z.object({
   question: z.string().trim().min(3, "Асуулт хэт богино байна.").max(300),
   answer: z.string().trim().min(1, "Хариулт оруулна уу.").max(4000),

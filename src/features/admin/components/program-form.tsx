@@ -19,11 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createProgram, updateProgram } from "@/features/admin/actions";
 import { programFormSchema, type ProgramFormInput } from "@/lib/validations";
-
-const labelClass =
-  "text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted";
-const inputClass =
-  "rounded-none border-border bg-white text-base focus-visible:border-clay focus-visible:ring-0";
+import { inputClass, labelClass } from "./form-styles";
 
 export function ProgramForm({
   initial,

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { DonateCTA } from "@/components/site/donate-cta";
 import { getAboutItems } from "@/features/about/queries";
+import { getSiteSettings } from "@/features/settings/queries";
 
 /**
  * §3 of the home funnel — the conversion heart.
@@ -8,14 +9,18 @@ import { getAboutItems } from "@/features/about/queries";
  * The claims are the shared "camel point" content edited in /admin/about.
  */
 export async function CamelSection() {
-  const { camelPoints } = await getAboutItems();
+  const [{ camelPoints }, settings] = await Promise.all([
+    getAboutItems(),
+    getSiteSettings(),
+  ]);
+  const { camel } = settings.home;
   return (
     <section className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="max-w-2xl">
-          <p className="eyebrow">&quot;Тэмээ&quot; гэж юу вэ?</p>
+          <p className="eyebrow">{camel.eyebrow}</p>
           <h2 className="mt-3 font-display text-3xl font-bold text-balance text-charcoal sm:text-5xl">
-            Гар урлалын бэлгэдэл, нэг хүүхдийн ирээдүйг гэрэлтүүлнэ.
+            {camel.title}
           </h2>
         </div>
 
@@ -24,7 +29,7 @@ export async function CamelSection() {
           <div className="grid gap-4 sm:grid-cols-2 lg:col-span-6">
             <div className="relative aspect-square overflow-hidden">
               <Image
-                src="/camel-charm.png"
+                src={camel.imageUrl1 || "/camel-charm.png"}
                 alt="Бэлгэдлийн тэмээ — гар урлалын арьсан бүтээгдэхүүн"
                 fill
                 sizes="(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw"
@@ -33,7 +38,7 @@ export async function CamelSection() {
             </div>
             <div className="relative aspect-square overflow-hidden">
               <Image
-                src="/bagCamel-bg.png"
+                src={camel.imageUrl2 || "/bagCamel-bg.png"}
                 alt="Бэлгэдлийн тэмээ цүнхэнд зүүсэн нь — амьдралын хэрэглээ"
                 fill
                 sizes="(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw"
@@ -49,7 +54,7 @@ export async function CamelSection() {
             ))}
 
             <p className="text-xs leading-relaxed text-charcoal-muted">
-              25,000₮ ба түүнээс дээш хандивлавал бид таны тэмээг хүргэж болно.
+              {camel.note}
             </p>
 
             <div>

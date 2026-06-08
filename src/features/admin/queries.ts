@@ -86,6 +86,22 @@ export async function getAdminPartners(): Promise<AdminPartner[]> {
   return (data ?? []) as AdminPartner[];
 }
 
+export async function getAdminPartnerById(
+  id: string,
+): Promise<AdminPartner | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("partners")
+    .select("id, name, logo_url, website_url, sort_order")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("getAdminPartnerById", error);
+    return null;
+  }
+  return (data as AdminPartner | null) ?? null;
+}
+
 export async function getAdminTestimonials(): Promise<AdminTestimonial[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -97,6 +113,22 @@ export async function getAdminTestimonials(): Promise<AdminTestimonial[]> {
     return [];
   }
   return (data ?? []) as AdminTestimonial[];
+}
+
+export async function getAdminTestimonialById(
+  id: string,
+): Promise<AdminTestimonial | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("testimonials")
+    .select("id, author, role, body, photo_url, sort_order")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("getAdminTestimonialById", error);
+    return null;
+  }
+  return (data as AdminTestimonial | null) ?? null;
 }
 
 export type AdminFaq = {
@@ -117,6 +149,20 @@ export async function getAdminFaqs(): Promise<AdminFaq[]> {
     return [];
   }
   return (data ?? []) as AdminFaq[];
+}
+
+export async function getAdminFaqById(id: string): Promise<AdminFaq | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("faqs")
+    .select("id, question, answer, sort_order")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("getAdminFaqById", error);
+    return null;
+  }
+  return (data as AdminFaq | null) ?? null;
 }
 
 export type AdminProgram = {
@@ -140,6 +186,22 @@ export async function getAdminPrograms(): Promise<AdminProgram[]> {
   return (data ?? []) as AdminProgram[];
 }
 
+export async function getAdminProgramById(
+  id: string,
+): Promise<AdminProgram | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("programs")
+    .select("id, code, title, items, sort_order")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("getAdminProgramById", error);
+    return null;
+  }
+  return (data as AdminProgram | null) ?? null;
+}
+
 export type AdminAboutItem = {
   id: string;
   kind: "goal" | "target" | "outcome" | "camel_point";
@@ -160,6 +222,22 @@ export async function getAdminAboutItems(): Promise<AdminAboutItem[]> {
     return [];
   }
   return (data ?? []) as AdminAboutItem[];
+}
+
+export async function getAdminAboutItemById(
+  id: string,
+): Promise<AdminAboutItem | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("about_items")
+    .select("id, kind, title, body, sort_order")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("getAdminAboutItemById", error);
+    return null;
+  }
+  return (data as AdminAboutItem | null) ?? null;
 }
 
 export type AdminDonor = {

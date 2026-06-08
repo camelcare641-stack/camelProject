@@ -27,6 +27,46 @@ export async function getNews(limit = 8): Promise<News[]> {
   return (data ?? []) as News[];
 }
 
+export type NewsPage = {
+  items: News[];
+  total: number;
+  page: number;
+  pageCount: number;
+  pageSize: number;
+};
+
+export async function getNewsPage(page = 1, pageSize = 12): Promise<NewsPage> {
+  const supabase = await createClient();
+  const safePage = Math.max(1, Math.floor(page) || 1);
+  const from = (safePage - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await supabase
+    .from("news")
+    .select(SELECT, { count: "exact" })
+    .order("published_at", { ascending: false })
+    .range(from, to);
+  if (error) {
+    console.error("getNewsPage", error);
+    return { items: [], total: 0, page: 1, pageCount: 1, pageSize };
+  }
+  const total = count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+
+  // Requested page is past the end (e.g. ?page=999): refetch the last page so
+  // the list and pagination controls stay consistent instead of showing empty.
+  if (safePage > pageCount && total > 0) {
+    return getNewsPage(pageCount, pageSize);
+  }
+
+  return {
+    items: (data ?? []) as News[],
+    total,
+    page: safePage,
+    pageCount,
+    pageSize,
+  };
+}
+
 export async function getAllNewsSlugs(): Promise<string[]> {
   // Build-time call from generateStaticParams; cookies-less client.
   const supabase = publicClient();

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { fetchRows } from "@/lib/supabase/fetch";
 
 export type Donor = {
   id: string;
@@ -23,16 +24,10 @@ export async function getCampaignStats() {
   return { total, count: data?.length ?? 0 };
 }
 
-export async function getRecentDonors(limit = 60): Promise<Donor[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("donors")
-    .select("id, name, amount, created_at")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error) {
-    console.error("getRecentDonors", error);
-    return [];
-  }
-  return (data ?? []) as Donor[];
+export function getRecentDonors(limit = 60): Promise<Donor[]> {
+  return fetchRows<Donor>("donors", "id, name, amount, created_at", {
+    orderBy: "created_at",
+    ascending: false,
+    limit,
+  });
 }

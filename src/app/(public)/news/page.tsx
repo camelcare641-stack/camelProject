@@ -1,9 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getNews } from "@/features/news/queries";
+import { getNewsPage } from "@/features/news/queries";
 import { formatDate } from "@/lib/utils";
-import { cta, site } from "@/lib/content";
+import { cta, pagination, site } from "@/lib/content";
+
+const PAGE_SIZE = 4;
+
+function newsHref(page: number): string {
+  return page <= 1 ? "/news" : `/news?page=${page}`;
+}
 
 export const metadata: Metadata = {
   title: "Мэдээ",
@@ -12,8 +18,17 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
-export default async function NewsIndexPage() {
-  const news = await getNews(50);
+export default async function NewsIndexPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const requestedPage = Number.parseInt(pageParam ?? "1", 10) || 1;
+  const { items: news, page, pageCount } = await getNewsPage(
+    requestedPage,
+    PAGE_SIZE,
+  );
 
   return (
     <>
@@ -88,6 +103,45 @@ export default async function NewsIndexPage() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {pageCount > 1 && (
+            <nav
+              aria-label="Хуудаслалт"
+              className="mt-12 flex items-center justify-between gap-4"
+            >
+              {page > 1 ? (
+                <Link
+                  href={newsHref(page - 1)}
+                  rel="prev"
+                  className="inline-flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.12em] text-clay no-underline hover:text-clay-dark hover:no-underline"
+                >
+                  ← {pagination.prev}
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.12em] text-charcoal-muted opacity-40">
+                  ← {pagination.prev}
+                </span>
+              )}
+
+              <span className="text-sm font-semibold tracking-[0.12em] text-charcoal-muted">
+                {pagination.page(page, pageCount)}
+              </span>
+
+              {page < pageCount ? (
+                <Link
+                  href={newsHref(page + 1)}
+                  rel="next"
+                  className="inline-flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.12em] text-clay no-underline hover:text-clay-dark hover:no-underline"
+                >
+                  {pagination.next} →
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.12em] text-charcoal-muted opacity-40">
+                  {pagination.next} →
+                </span>
+              )}
+            </nav>
           )}
         </div>
       </section>

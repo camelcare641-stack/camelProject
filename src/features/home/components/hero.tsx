@@ -9,6 +9,8 @@ export async function Hero() {
     getCampaignStats(),
     getSiteSettings(),
   ]);
+  const { hero } = settings.home;
+  const titleLines = hero.title.split("\n");
 
   return (
     <section className="bg-white">
@@ -17,12 +19,15 @@ export async function Hero() {
         <div className="lg:col-span-7">
           <p className="eyebrow">{settings.org}</p>
           <h1 className="mt-5 font-display text-[2.5rem] font-bold leading-[1.05] tracking-tight text-balance text-charcoal sm:text-[3.25rem] lg:text-[4.25rem]">
-            Нэг тэмээ,<br />
-            нэг хүүхдийн ирээдүй.
+            {titleLines.map((line, i) => (
+              <span key={i}>
+                {i > 0 && <br />}
+                {line}
+              </span>
+            ))}
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-charcoal-muted">
-            Хотын захын хорооллын болон зорилтот бүлгийн хүүхдүүдийн боловсрол,
-            сэтгэлзүй, хөгжлийг хамтдаа тээе.
+            {hero.subtitle}
           </p>
 
           <dl className="mt-8 inline-flex items-baseline gap-4 border-l-2 border-clay pl-5">
@@ -50,7 +55,7 @@ export async function Hero() {
         <div className="lg:col-span-5">
           <div className="relative aspect-4/5 w-full overflow-hidden">
             <Image
-              src="/camel-charm.png"
+              src={hero.imageUrl || "/camel-charm.png"}
               alt="Бэлгэдлийн тэмээ"
               fill
               sizes="(min-width: 1024px) 420px, 100vw"

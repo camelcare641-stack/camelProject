@@ -13,6 +13,7 @@ import {
   donorAdminSchema,
   donationUpdateSchema,
   siteSettingsSchema,
+  homeContentSchema,
   faqSchema,
   programSchema,
   aboutItemSchema,
@@ -23,6 +24,7 @@ import {
   type DonorAdminInput,
   type DonationUpdateInput,
   type SiteSettingsInput,
+  type HomeContentInput,
   type FaqInput,
   type ProgramInput,
   type AboutItemInput,
@@ -183,6 +185,36 @@ export async function updateSiteSettings(
   revalidatePath("/contact");
   revalidatePath("/donate");
   revalidatePath("/admin/settings");
+  return { ok: true, message: "Шинэчлэгдлээ." };
+}
+
+// ── Home-page content (headings / body / images) ─────────────────────────────
+
+export async function updateHomeContent(
+  input: HomeContentInput,
+): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const parsed = homeContentSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
+
+  // Upsert every known key so blanks are persisted as blanks (empty-means-empty).
+  const rows = Object.entries(parsed.data).map(([key, value]) => ({
+    key,
+    value: value ?? "",
+    updated_at: new Date().toISOString(),
+  }));
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("site_settings")
+    .upsert(rows, { onConflict: "key" });
+  if (error) {
+    console.error("updateHomeContent", error);
+    return { ok: false, message: "Хадгалахад алдаа гарлаа." };
+  }
+  revalidatePath("/");
+  revalidatePath("/admin/home");
   return { ok: true, message: "Шинэчлэгдлээ." };
 }
 

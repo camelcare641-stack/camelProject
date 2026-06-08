@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FaqForm } from "@/features/admin/components/faq-form";
-import { getAdminFaqs } from "@/features/admin/queries";
+import { getAdminFaqById } from "@/features/admin/queries";
 
 export const metadata: Metadata = {
   title: "Асуулт засах",
@@ -17,7 +17,7 @@ export default async function EditFaqPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const faq = (await getAdminFaqs()).find((f) => f.id === id);
+  const faq = await getAdminFaqById(id);
   if (!faq) notFound();
 
   return (

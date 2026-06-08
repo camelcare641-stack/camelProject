@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PartnerForm } from "@/features/admin/components/partner-form";
-import { getAdminPartners } from "@/features/admin/queries";
+import { getAdminPartnerById } from "@/features/admin/queries";
 
 export const metadata: Metadata = {
   title: "Хамтрагч засах",
@@ -17,7 +17,7 @@ export default async function EditPartnerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const partner = (await getAdminPartners()).find((p) => p.id === id);
+  const partner = await getAdminPartnerById(id);
   if (!partner) notFound();
 
   return (

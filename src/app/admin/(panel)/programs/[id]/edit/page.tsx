@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProgramForm } from "@/features/admin/components/program-form";
-import { getAdminPrograms } from "@/features/admin/queries";
+import { getAdminProgramById } from "@/features/admin/queries";
 
 export const metadata: Metadata = {
   title: "Хөтөлбөр засах",
@@ -17,7 +17,7 @@ export default async function EditProgramPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const program = (await getAdminPrograms()).find((p) => p.id === id);
+  const program = await getAdminProgramById(id);
   if (!program) notFound();
 
   return (

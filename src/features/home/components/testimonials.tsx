@@ -3,7 +3,15 @@
 import { useRef } from "react";
 import type { Testimonial } from "@/features/home/queries";
 
-export function TestimonialsSection({ items }: { items: Testimonial[] }) {
+export function TestimonialsSection({
+  items,
+  eyebrow,
+  title,
+}: {
+  items: Testimonial[];
+  eyebrow: string;
+  title: string;
+}) {
   const scrollerRef = useRef<HTMLUListElement>(null);
 
   if (items.length === 0) return null;
@@ -24,9 +32,9 @@ export function TestimonialsSection({ items }: { items: Testimonial[] }) {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
           <div className="max-w-2xl">
-            <p className="eyebrow">Дэмжигчид</p>
+            <p className="eyebrow">{eyebrow}</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-balance text-charcoal sm:text-4xl">
-              Дэмжигчдийн үг
+              {title}
             </h2>
           </div>
           {items.length > 1 && (

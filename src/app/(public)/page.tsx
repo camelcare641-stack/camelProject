@@ -6,14 +6,17 @@ import { TestimonialsSection } from "@/features/home/components/testimonials";
 import { DonateSection } from "@/features/donate/components/donate-section";
 import { getTestimonials } from "@/features/home/queries";
 import { getNews } from "@/features/news/queries";
+import { getSiteSettings } from "@/features/settings/queries";
 
 export const revalidate = 30;
 
 export default async function HomePage() {
-  const [news, testimonials] = await Promise.all([
+  const [news, testimonials, settings] = await Promise.all([
     getNews(8),
     getTestimonials(),
+    getSiteSettings(),
   ]);
+  const { news: newsText, testimonials: testimonialsText } = settings.home;
 
   return (
     <>
@@ -24,8 +27,16 @@ export default async function HomePage() {
       <div id="camel">
         <CamelSection />
       </div>
-      <NewsSection news={news} />
-      <TestimonialsSection items={testimonials} />
+      <NewsSection
+        news={news}
+        eyebrow={newsText.eyebrow}
+        title={newsText.title}
+      />
+      <TestimonialsSection
+        items={testimonials}
+        eyebrow={testimonialsText.eyebrow}
+        title={testimonialsText.title}
+      />
       <DonateSection />
     </>
   );

@@ -19,11 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createAboutItem, updateAboutItem } from "@/features/admin/actions";
 import { aboutItemSchema, type AboutItemInput } from "@/lib/validations";
-
-const labelClass =
-  "text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted";
-const inputClass =
-  "rounded-none border-border bg-white text-base focus-visible:border-clay focus-visible:ring-0";
+import { inputClass, labelClass } from "./form-styles";
 
 const KIND_LABELS: Record<AboutItemInput["kind"], string> = {
   goal: "Зорилт",

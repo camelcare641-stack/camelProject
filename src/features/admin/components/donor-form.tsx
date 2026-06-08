@@ -17,11 +17,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { createDonor } from "@/features/admin/actions";
 import { donorAdminSchema, type DonorAdminInput } from "@/lib/validations";
+import { labelClass, inputClass as inputBase } from "./form-styles";
 
-const labelClass =
-  "text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted";
-const inputClass =
-  "h-12 rounded-none border-border bg-white text-base focus-visible:border-clay focus-visible:ring-0";
+const inputClass = `h-12 ${inputBase}`;
 
 /** Inline "add donor" form for recording offline / bank-transfer donors. */
 export function DonorForm() {

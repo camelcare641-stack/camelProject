@@ -17,11 +17,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { signIn } from "@/features/admin/actions";
 import { adminLoginSchema, type AdminLoginInput } from "@/lib/validations";
+import { labelClass, inputClass as inputBase } from "./form-styles";
 
-const labelClass =
-  "text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted";
-const inputClass =
-  "h-11 rounded-none border-border bg-white text-base focus-visible:border-clay focus-visible:ring-0";
+const inputClass = `h-11 ${inputBase}`;
 
 export function LoginForm() {
   const router = useRouter();

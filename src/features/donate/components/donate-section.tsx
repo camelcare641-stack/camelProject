@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { site } from "@/lib/content";
 import { getSiteSettings } from "@/features/settings/queries";
 import { CopyButton } from "@/features/donate/components/copy-button";
@@ -8,18 +9,19 @@ import { DonorForm } from "@/features/donate/components/donor-form";
  * route. The bank-transfer fallback for donors who don't use QPay.
  */
 export async function DonateSection() {
-  const { bank } = await getSiteSettings();
+  const settings = await getSiteSettings();
+  const { bank } = settings;
+  const { donate } = settings.home;
   return (
     <section id="donate" className="bg-paper py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="max-w-2xl">
-          <p className="eyebrow">Өөр сонголт</p>
+          <p className="eyebrow">{donate.eyebrow}</p>
           <h2 className="mt-3 font-display text-3xl font-bold text-charcoal sm:text-4xl">
-            Дансаар шилжүүлэх
+            {donate.title}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-charcoal-muted">
-            QPay биш, банкны аппаар шилжүүлэх боломжтой. Шилжүүлэг хийсний дараа
-            доорх формоор нэрээ бүртгүүлснээр хандивлагчдын жагсаалтад нэгдэнэ.
+            {donate.intro}
           </p>
         </div>
 
@@ -48,25 +50,37 @@ export async function DonateSection() {
               {bank.note}
             </p>
 
-            <div className="mt-10 border-t border-border pt-7">
+            {/* <div className="mt-10 border-t border-border pt-7">
               <p className="eyebrow">Нэрээ бүртгүүлэх</p>
               <p className="mt-2 text-sm leading-relaxed text-charcoal-muted">
                 Шилжүүлэг хийсний дараа нэрээ бүртгүүлснээр хандивлагчдын
                 жагсаалтад нэмэгдэнэ.
               </p>
               <DonorForm />
-            </div>
+            </div> */}
           </div>
 
-          {/* QR placeholder */}
+          {/* QR code */}
           <div className="lg:col-span-5">
             <div className="border border-border bg-white p-7 sm:p-9">
               <p className="eyebrow">QR кодоор төлөх</p>
-              <div className="mt-4 flex aspect-square w-full max-w-[260px] items-center justify-center border border-dashed border-border bg-paper text-center text-[11px] uppercase tracking-[0.1em] text-charcoal-muted">
-                [REPLACE — QPay / банкны QR зураг]
-              </div>
+              {donate.qrImageUrl ? (
+                <div className="relative mt-4 aspect-square w-full max-w-[260px] overflow-hidden border border-border bg-white">
+                  <Image
+                    src={donate.qrImageUrl}
+                    alt="Хандивын QR код"
+                    fill
+                    sizes="260px"
+                    className="object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="mt-4 flex aspect-square w-full max-w-[260px] items-center justify-center border border-dashed border-border bg-paper text-center text-[11px] uppercase tracking-[0.1em] text-charcoal-muted">
+                  [REPLACE — QPay / банкны QR зураг]
+                </div>
+              )}
               <p className="mt-4 text-xs leading-relaxed text-charcoal-muted">
-                QR кодыг өөрийн банкны аппаар уншуулан шилжүүлэг хийнэ үү.
+                {donate.qrCaption}
               </p>
             </div>
           </div>

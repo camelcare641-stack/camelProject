@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cta } from "@/lib/content";
@@ -5,48 +6,46 @@ import { getSiteSettings } from "@/features/settings/queries";
 
 export async function AboutSummary() {
   const settings = await getSiteSettings();
+  const { problem, solution } = settings.home;
   return (
     <section className="bg-paper py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid gap-x-12 gap-y-16 lg:grid-cols-2 lg:gap-x-16 lg:gap-y-24">
           {/* Row 1 — Problem: text left, image right */}
           <div>
-            <p className="eyebrow">Тулгамдсан асуудал</p>
+            <p className="eyebrow">{problem.eyebrow}</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-balance text-charcoal sm:text-4xl">
-              Хотын захын олон хүүхэд дэмжлэггүй өсөж байна.
+              {problem.title}
             </h2>
-            <p className="mt-5 text-base leading-relaxed text-charcoal-muted">
-              Сэтгэлзүйн дарамт, гэр бүлийн хүчирхийлэл, боловсролын тэгш бус
-              байдал, өөртөө итгэх итгэл сул, хөгжлийн боломж хомс, цахим
-              болон нийгмийн сөрөг нөлөөлөл — эдгээр нь хотын захын
-              хорооллын болон зорилтот бүлгийн хүүхдүүдийн өдөр тутмын бодит
-              байдал.
-            </p>
-            <p className="mt-3 text-base leading-relaxed text-charcoal-muted">
-              Тэдэнд зөвхөн материаллаг тусламж бус,{" "}
-              <span className="text-charcoal">сэтгэлзүйн дэмжлэг, хөгжлийн
-              орчин, хайр халамж, сонсох хүн</span> хамгийн их хэрэгтэй.
-            </p>
+            {problem.body
+              .split("\n")
+              .filter((p) => p.trim())
+              .map((p, i) => (
+                <p
+                  key={i}
+                  className="mt-5 text-base leading-relaxed text-charcoal-muted first:mt-5 [&:not(:first-of-type)]:mt-3"
+                >
+                  {p}
+                </p>
+              ))}
           </div>
-          <ImageSlot label="Асуудлын зураг" />
+          <ImageSlot label="Асуудлын зураг" src={problem.imageUrl} />
 
           {/* Row 2 — Solution: text right, image left on desktop */}
           <div className="lg:order-2">
-            <p className="eyebrow">Бидний шийдэл</p>
+            <p className="eyebrow">{solution.eyebrow}</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-balance text-charcoal sm:text-4xl">
               {settings.fullName}
             </h2>
             <p className="mt-5 text-base leading-relaxed text-charcoal-muted">
-              Гар урлалын <span className="text-charcoal">&ldquo;Тэмээ&rdquo;</span>{" "}
-              бэлэгдэл нь нэг хүүхдийн сургалт, сэтгэлзүйн зөвлөгөө, хөгжлийн
-              үйл ажиллагаа, хамгаалал, урлаг спортын оролцоонд хүрэх дэмжлэг.
+              {solution.body}
             </p>
             <dl className="mt-8 flex items-baseline gap-x-6 border-y border-border py-5">
               <dt className="font-display text-4xl font-bold text-charcoal sm:text-5xl">
-                25,000₮
+                {solution.price}
               </dt>
               <dd className="text-sm text-charcoal-muted">
-                = нэг хүүхдийн боломж
+                {solution.priceCaption}
               </dd>
             </dl>
             <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -61,14 +60,43 @@ export async function AboutSummary() {
               </Link>
             </div>
           </div>
-          <ImageSlot label="Шийдлийн зураг" className="lg:order-1" />
+          <ImageSlot
+            label="Шийдлийн зураг"
+            src={solution.imageUrl}
+            className="lg:order-1"
+          />
         </div>
       </div>
     </section>
   );
 }
 
-function ImageSlot({ label, className }: { label: string; className?: string }) {
+function ImageSlot({
+  label,
+  src,
+  className,
+}: {
+  label: string;
+  src: string;
+  className?: string;
+}) {
+  if (src) {
+    return (
+      <div
+        className={`relative aspect-[4/3] overflow-hidden border border-border bg-white${
+          className ? ` ${className}` : ""
+        }`}
+      >
+        <Image
+          src={src}
+          alt={label}
+          fill
+          sizes="(min-width: 1024px) 540px, 100vw"
+          className="object-cover"
+        />
+      </div>
+    );
+  }
   return (
     <div
       aria-label={`${label} — удахгүй`}

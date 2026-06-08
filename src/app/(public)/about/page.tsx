@@ -275,15 +275,41 @@ export default async function AboutPage() {
               <h2 className="font-display text-3xl font-bold text-charcoal sm:text-4xl">
                 Хамтран ажиллах байгууллагууд
               </h2>
-              <ul className="mt-8 grid divide-y divide-border border-y border-border sm:grid-cols-2 sm:divide-x sm:[&>li:nth-child(2n)]:border-l">
-                {partners.map((p) => (
-                  <li
-                    key={p.id}
-                    className="py-4 text-base text-charcoal sm:px-6"
-                  >
-                    {p.name}
-                  </li>
-                ))}
+              <ul className="mt-8 grid grid-cols-2 items-center gap-x-8 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+                {partners.map((p) => {
+                  const inner = p.logo_url ? (
+                    <div className="relative h-12 w-full opacity-70 transition-opacity hover:opacity-100">
+                      <Image
+                        src={p.logo_url}
+                        alt={p.name}
+                        fill
+                        sizes="(max-width: 640px) 45vw, 200px"
+                        className="object-contain object-left"
+                      />
+                    </div>
+                  ) : (
+                    <span className="block text-sm font-medium text-charcoal-muted transition-colors hover:text-charcoal">
+                      {p.name}
+                    </span>
+                  );
+                  return (
+                    <li key={p.id} className="flex h-12 items-center">
+                      {p.website_url ? (
+                        <a
+                          href={p.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full no-underline hover:no-underline"
+                          aria-label={p.name}
+                        >
+                          {inner}
+                        </a>
+                      ) : (
+                        inner
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>

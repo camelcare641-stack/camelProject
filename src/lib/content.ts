@@ -11,6 +11,53 @@ export const site = {
   unitPrice: 25000,
 } as const;
 
+// Default home-page content (headings, body, images). These are the fallbacks for
+// the `home_*` keys in the `site_settings` table; an admin overrides any of them on
+// the "Нүүр хуудас" admin page. A genuinely missing row falls back here; a seeded-
+// yet-blank value renders blank (empty-means-empty), exactly like the other settings.
+// Keys are flat (db key shape) so they map 1:1 to site_settings and the admin form.
+export const homeDefaults = {
+  // Hero
+  home_hero_title: "Нэг тэмээ,\nнэг хүүхдийн ирээдүй.",
+  home_hero_subtitle:
+    "Хотын захын хорооллын болон зорилтот бүлгийн хүүхдүүдийн боловсрол, сэтгэлзүй, хөгжлийг хамтдаа бүтээе.",
+  home_hero_image_url: "/camel-charm.png",
+  // About — problem (paragraphs separated by a newline)
+  home_problem_eyebrow: "Тулгамдсан асуудал",
+  home_problem_title: "Хотын захын олон хүүхэд дэмжлэггүй өсөж байна.",
+  home_problem_body:
+    "Сэтгэлзүйн дарамт, гэр бүлийн хүчирхийлэл, боловсролын тэгш бус байдал, өөртөө итгэх итгэл сул, хөгжлийн боломж хомс, цахим болон нийгмийн сөрөг нөлөөлөл — эдгээр нь хотын захын хорооллын болон зорилтот бүлгийн хүүхдүүдийн өдөр тутмын бодит байдал.\nТэдэнд зөвхөн материаллаг тусламж бус, сэтгэлзүйн дэмжлэг, хөгжлийн орчин, хайр халамж, сонсох хүн хамгийн их хэрэгтэй.",
+  home_problem_image_url: "",
+  // About — solution (heading stays the org full name)
+  home_solution_eyebrow: "Бидний шийдэл",
+  home_solution_body:
+    "Гар урлалын “Тэмээ” бэлэгдэл нь нэг хүүхдийн сургалт, сэтгэлзүйн зөвлөгөө, хөгжлийн үйл ажиллагаа, хамгаалал, урлаг спортын оролцоонд хүрэх дэмжлэг.",
+  home_solution_price: "25,000₮",
+  home_solution_price_caption: "= нэг хүүхдийн боломж",
+  home_solution_image_url: "",
+  // Camel section
+  home_camel_eyebrow: "“Тэмээ” гэж юу вэ?",
+  home_camel_title: "Гар урлалын бэлгэдэл, нэг хүүхдийн ирээдүйг гэрэлтүүлнэ.",
+  home_camel_note:
+    "25,000₮ ба түүнээс дээш хандивлавал бид таны тэмээг хүргэж болно.",
+  home_camel_image_1_url: "/camel-charm.png",
+  home_camel_image_2_url: "/bagCamel-bg.png",
+  // News strip
+  home_news_eyebrow: "Мэдээ",
+  home_news_title: "Сүүлийн үеийн мэдээ",
+  // Testimonials
+  home_testimonials_eyebrow: "Дэмжигчид",
+  home_testimonials_title: "Дэмжигчдийн үг",
+  // Donate (bank transfer) section
+  home_donate_eyebrow: "Өөр сонголт",
+  home_donate_title: "Дансаар шилжүүлэх",
+  home_donate_intro:
+    "QPay биш, банкны аппаар шилжүүлэх боломжтой. Шилжүүлэг хийсний дараа доорх формоор нэрээ бүртгүүлснээр хандивлагчдын жагсаалтад нэгдэнэ.",
+  home_qr_image_url: "",
+  home_qr_caption:
+    "QR кодыг өөрийн банкны аппаар уншуулан шилжүүлэг хийнэ үү.",
+} as const;
+
 export const nav = [
   { href: "/", label: "Нүүр" },
   { href: "/about", label: "Төслийн тухай" },
@@ -50,6 +97,13 @@ export const cta = {
   bankTransfer: "Дансаар шилжүүлэх",
   close: "Хаах",
   back: "Буцах",
+} as const;
+
+export const pagination = {
+  prev: "Өмнөх",
+  next: "Дараах",
+  // e.g. "1 / 5" — товч, mobile-first
+  page: (current: number, total: number) => `${current} / ${total}`,
 } as const;
 
 export const modal = {

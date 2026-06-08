@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AboutItemForm } from "@/features/admin/components/about-item-form";
-import { getAdminAboutItems } from "@/features/admin/queries";
+import { getAdminAboutItemById } from "@/features/admin/queries";
 
 export const metadata: Metadata = {
   title: "Зүйл засах",
@@ -17,7 +17,7 @@ export default async function EditAboutItemPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const item = (await getAdminAboutItems()).find((i) => i.id === id);
+  const item = await getAdminAboutItemById(id);
   if (!item) notFound();
 
   return (

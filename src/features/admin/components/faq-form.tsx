@@ -19,11 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createFaq, updateFaq } from "@/features/admin/actions";
 import { faqSchema, type FaqInput } from "@/lib/validations";
-
-const labelClass =
-  "text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted";
-const inputClass =
-  "rounded-none border-border bg-white text-base focus-visible:border-clay focus-visible:ring-0";
+import { inputClass, labelClass } from "./form-styles";
 
 export function FaqForm({
   initial,

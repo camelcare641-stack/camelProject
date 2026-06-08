@@ -7,7 +7,15 @@ import type { News } from "@/features/news/queries";
 import { formatDate } from "@/lib/utils";
 import { cta } from "@/lib/content";
 
-export function NewsSection({ news }: { news: News[] }) {
+export function NewsSection({
+  news,
+  eyebrow,
+  title,
+}: {
+  news: News[];
+  eyebrow: string;
+  title: string;
+}) {
   const scrollerRef = useRef<HTMLUListElement>(null);
 
   function scrollByCards(direction: 1 | -1) {
@@ -26,9 +34,9 @@ export function NewsSection({ news }: { news: News[] }) {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
           <div>
-            <p className="eyebrow">Мэдээ</p>
+            <p className="eyebrow">{eyebrow}</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-balance text-charcoal sm:text-4xl">
-              Сүүлийн үеийн мэдээ
+              {title}
             </h2>
           </div>
           <div className="flex items-center gap-4">

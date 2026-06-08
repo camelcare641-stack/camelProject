@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { fetchRows } from "@/lib/supabase/fetch";
 
 export type Testimonial = {
   id: string;
@@ -8,15 +8,10 @@ export type Testimonial = {
   photo_url: string | null;
 };
 
-export async function getTestimonials(): Promise<Testimonial[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("testimonials")
-    .select("id, author, role, body, photo_url")
-    .order("sort_order", { ascending: true });
-  if (error) {
-    console.error("getTestimonials", error);
-    return [];
-  }
-  return (data ?? []) as Testimonial[];
+export function getTestimonials(): Promise<Testimonial[]> {
+  return fetchRows<Testimonial>(
+    "testimonials",
+    "id, author, role, body, photo_url",
+    { orderBy: "sort_order" },
+  );
 }

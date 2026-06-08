@@ -20,11 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createTestimonial, updateTestimonial } from "@/features/admin/actions";
 import { ImageUpload } from "@/features/admin/components/image-upload";
 import { testimonialSchema, type TestimonialInput } from "@/lib/validations";
-
-const labelClass =
-  "text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted";
-const inputClass =
-  "rounded-none border-border bg-white text-base focus-visible:border-clay focus-visible:ring-0";
+import { inputClass, labelClass } from "./form-styles";
 
 export function TestimonialForm({
   initial,

@@ -22,11 +22,7 @@ import { ImageUpload } from "@/features/admin/components/image-upload";
 import { RichTextEditor } from "@/features/admin/components/rich-text-editor";
 import { slugify } from "@/lib/utils";
 import { newsSchema, type NewsInput } from "@/lib/validations";
-
-const labelClass =
-  "text-xs font-semibold uppercase tracking-[0.12em] text-charcoal-muted";
-const inputClass =
-  "rounded-none border-border bg-white text-base focus-visible:border-clay focus-visible:ring-0";
+import { inputClass, labelClass } from "./form-styles";
 
 export function NewsForm({
   initial,
