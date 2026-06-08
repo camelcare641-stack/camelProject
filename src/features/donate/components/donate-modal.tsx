@@ -29,12 +29,15 @@ import { donationSchema, type DonationInput } from "@/lib/validations";
 import { cta, modal, site } from "@/lib/content";
 import { formatMNT } from "@/lib/utils";
 
+type BankApp = { name: string; description: string; logo: string; link: string };
+
 type ModalState =
   | { kind: "form" }
   | {
       kind: "pending";
       donationId: string;
       qrImage: string;
+      bankApps: BankApp[];
       amount: number;
     }
   | { kind: "confirmed"; amount: number };
@@ -105,6 +108,7 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
         kind: "pending",
         donationId: result.donationId,
         qrImage: result.qrImage,
+        bankApps: result.bankApps,
         amount: values.amount,
       });
     });
@@ -304,6 +308,58 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
             </DialogHeader>
 
             <div className="mt-2 flex flex-col items-center gap-4">
+              <p className="font-display text-2xl font-bold text-charcoal">
+                {formatMNT(state.amount)}
+              </p>
+
+              {/* Bank-app deep links — the primary path on a phone: tapping a
+                  bank hands off to its app with the payment pre-filled. The
+                  schemes are no-ops on desktop, where the QR below is used. */}
+              {state.bankApps.length > 0 && (
+                <div className="w-full">
+                  <p className="text-center text-sm font-semibold text-charcoal">
+                    {modal.bankAppTitle}
+                  </p>
+                  <p className="mt-1 text-center text-xs text-charcoal-muted">
+                    {modal.bankAppHint}
+                  </p>
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {state.bankApps.map((bank) => (
+                      <a
+                        key={bank.name}
+                        href={bank.link}
+                        className="flex flex-col items-center gap-1.5 rounded-md border border-border bg-white p-2 text-center no-underline transition-colors hover:border-clay hover:bg-paper hover:no-underline"
+                        title={bank.description}
+                      >
+                        {/* QPay logo CDN — plain img avoids next/image remote
+                            host config for a handful of tiny icons. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={bank.logo}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="size-8 rounded-sm object-contain"
+                          loading="lazy"
+                        />
+                        <span className="line-clamp-2 text-[11px] leading-tight text-charcoal">
+                          {bank.description}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Divider into the QR fallback. */}
+              {state.bankApps.length > 0 && (
+                <div className="flex w-full items-center gap-3 text-xs text-charcoal-muted">
+                  <span className="h-px flex-1 bg-border" />
+                  {modal.orScanQr}
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              )}
+
               <div className="relative">
                 <Image
                   src={`data:image/png;base64,${state.qrImage}`}
@@ -315,10 +371,6 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
                 />
                 <span className="pointer-events-none absolute inset-0 animate-pulse rounded-sm ring-2 ring-clay/30" />
               </div>
-
-              <p className="font-display text-2xl font-bold text-charcoal">
-                {formatMNT(state.amount)}
-              </p>
 
               <p className="inline-flex items-center gap-2 text-sm text-charcoal-muted">
                 <Loader2 className="size-4 animate-spin" />

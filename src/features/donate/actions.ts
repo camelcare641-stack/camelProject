@@ -48,6 +48,9 @@ type CreateInvoiceResult =
       qrImage: string;
       qrText: string;
       shortUrl: string;
+      // Per-bank deep links (khanbank://…, tdbbank://… etc). Tapping one on a
+      // phone hands off to that bank app with the payment pre-filled.
+      bankApps: { name: string; description: string; logo: string; link: string }[];
     }
   | { ok: false; message: string };
 
@@ -117,6 +120,7 @@ export async function createDonationInvoice(
       qrImage: invoice.qr_image,
       qrText: invoice.qr_text,
       shortUrl: invoice.qPay_shortUrl,
+      bankApps: invoice.urls ?? [],
     };
   } catch (err) {
     console.error("createDonationInvoice qpay", err);
