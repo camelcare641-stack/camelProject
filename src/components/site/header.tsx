@@ -25,6 +25,7 @@ function isActive(pathname: string, href: string) {
 export function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Header sits flush at the top of the page (no border) and grows a hairline
   // border + soft shadow once the user scrolls, so it reads as a finished bar
@@ -84,8 +85,10 @@ export function Header() {
             <DonateCTA />
           </div>
 
-          {/* Mobile menu trigger + drawer for secondary navigation. */}
-          <Sheet>
+          {/* Mobile menu trigger + drawer for secondary navigation.
+              Controlled so tapping a nav link closes the drawer — Next.js
+              client navigation doesn't unmount the Sheet on its own. */}
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger
               render={
                 <Button
@@ -105,6 +108,7 @@ export function Header() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => setMenuOpen(false)}
                     className={cn(
                       "px-5 py-4 text-base font-semibold no-underline hover:bg-paper hover:no-underline",
                       isActive(pathname, item.href)
