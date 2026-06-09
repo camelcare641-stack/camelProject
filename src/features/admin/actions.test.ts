@@ -3,8 +3,8 @@ import { makeFakeClient, findCall, type FakeConfig } from "@/test/fake-supabase"
 
 // Characterizes the admin CRUD actions before the makeCrudActions() factory
 // extraction: the requireAdmin gate, validation, success/error messages, and
-// revalidation. Also pins the CURRENT news behavior — no requireAdmin, RLS-only
-// client — so the planned authz normalization shows up as an explicit test diff.
+// revalidation. News now follows the same requireAdmin + service-role pattern
+// as the rest (authz normalization #6).
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
@@ -93,45 +93,43 @@ describe("deleteFaq", () => {
   });
 });
 
-describe("createNews — current authz inconsistency (pre-Tier-3)", () => {
-  it("has NO requireAdmin gate: inserts via the RLS client even with no user", async () => {
-    // News uses the server (anon+cookies / RLS) client for writes and never
-    // calls requireAdmin. This test documents that and WILL change when the
-    // authz model is normalized (#6).
-    const fake = makeFakeClient({ news: { write: { data: null, error: null } } }, { user: null });
-    serverMock.mockResolvedValue(fake.client);
+describe("createNews", () => {
+  const VALID_NEWS = {
+    title: "Шинэ мэдээ",
+    slug: "shine-medee",
+    summary: "",
+    content: "",
+    image_url: "",
+    published_at: "2026-06-07",
+  };
 
-    const result = await createNews({
-      title: "Шинэ мэдээ",
-      slug: "shine-medee",
-      summary: "",
-      content: "",
-      image_url: "",
-      published_at: "2026-06-07",
-    });
-
-    expect(result).toEqual({ ok: true, message: "Мэдээ нэмэгдлээ." });
-    // Insert happened despite user=null, and the service-role admin client was
-    // never used for news.
-    expect(findCall(fake.calls, "news", "insert")).toBeDefined();
+  it("rejects an unauthenticated caller without touching the admin DB", async () => {
+    authAs(null);
+    const result = await createNews(VALID_NEWS);
+    expect(result).toEqual({ ok: false, message: "Эрх хүрэлцэхгүй байна." });
     expect(adminMock).not.toHaveBeenCalled();
   });
 
-  it("maps a unique-violation (23505) to a slug-collision message", async () => {
-    const fake = makeFakeClient(
-      { news: { write: { data: null, error: { code: "23505", message: "dup" } } } },
-      { user: { id: "admin" } },
-    );
-    serverMock.mockResolvedValue(fake.client);
+  it("inserts via the service-role client and revalidates on success", async () => {
+    authAs({ id: "admin" });
+    const fake = adminDb({ news: { write: { data: null, error: null } } });
 
-    const result = await createNews({
-      title: "Давхар",
-      slug: "duplicate",
-      summary: "",
-      content: "",
-      image_url: "",
-      published_at: "2026-06-07",
+    const result = await createNews(VALID_NEWS);
+
+    expect(result).toEqual({ ok: true, message: "Мэдээ нэмэгдлээ." });
+    expect(findCall(fake.calls, "news", "insert")).toBeDefined();
+    const paths = revalidateMock.mock.calls.map((c) => c[0]);
+    expect(paths).toContain("/news");
+    expect(paths).toContain("/");
+  });
+
+  it("maps a unique-violation (23505) to a slug-collision message", async () => {
+    authAs({ id: "admin" });
+    adminDb({
+      news: { write: { data: null, error: { code: "23505", message: "dup" } } },
     });
+
+    const result = await createNews({ ...VALID_NEWS, slug: "duplicate" });
     expect(result).toEqual({
       ok: false,
       message: "Slug давхцаж байна. Өөр утга оруулна уу.",

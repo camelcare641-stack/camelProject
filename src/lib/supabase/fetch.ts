@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { publicClient } from "@/lib/supabase/public";
 
 type FetchRowsOptions = {
   /** Column to order by. Omit to leave ordering to the database default. */
@@ -14,13 +14,17 @@ type FetchRowsOptions = {
  * and limit, logging and returning [] on error. Supabase column strings are
  * untyped, so callers supply the row type `T` (mirroring the per-feature type)
  * exactly as the hand-written queries did with their `as T[]` casts.
+ *
+ * Uses the cookieless `publicClient` so the public pages that call it stay
+ * statically renderable / ISR-cached — reading a cookie (the server client)
+ * opts the whole route into dynamic rendering, defeating their `revalidate`.
  */
 export async function fetchRows<T>(
   table: string,
   columns: string,
   options: FetchRowsOptions = {},
 ): Promise<T[]> {
-  const supabase = await createClient();
+  const supabase = publicClient();
   let query = supabase.from(table).select(columns);
   if (options.orderBy) {
     query = query.order(options.orderBy, {

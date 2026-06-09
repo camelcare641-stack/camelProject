@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { publicClient } from "@/lib/supabase/public";
 import { bank, contactInfo, homeDefaults, site } from "@/lib/content";
 import { HOME_CONTENT_KEYS } from "@/lib/validations";
 
@@ -49,7 +50,11 @@ export type SiteSettings = {
 // Wrapped in React cache() so the multiple consumers on a single page render
 // (Hero, AboutSummary, DonateSection, Footer, …) share one query per request.
 export const getSiteSettings = cache(async function getSiteSettings(): Promise<SiteSettings> {
-  const supabase = await createClient();
+  // Cookieless client: getSiteSettings feeds the Footer (rendered in the public
+  // layout) and every public page, so reading a cookie here would force every
+  // route into dynamic rendering. The admin prefill queries below keep the
+  // server client — those routes are already dynamic behind auth.
+  const supabase = publicClient();
   const { data, error } = await supabase
     .from("site_settings")
     .select("key, value");

@@ -76,6 +76,8 @@ export async function signOut(): Promise<never> {
 }
 
 export async function createNews(input: NewsInput): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
   const parsed = newsSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -83,7 +85,7 @@ export async function createNews(input: NewsInput): Promise<ActionResult> {
       message: parsed.error.issues[0]?.message ?? "Алдаа гарлаа.",
     };
   }
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { error } = await supabase.from("news").insert({
     title: parsed.data.title,
     slug: parsed.data.slug,
@@ -109,6 +111,8 @@ export async function updateNews(
   id: string,
   input: NewsInput,
 ): Promise<ActionResult> {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
   const parsed = newsSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -116,7 +120,7 @@ export async function updateNews(
       message: parsed.error.issues[0]?.message ?? "Алдаа гарлаа.",
     };
   }
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("news")
     .update({
@@ -143,7 +147,9 @@ export async function updateNews(
 }
 
 export async function deleteNews(id: string): Promise<ActionResult> {
-  const supabase = await createClient();
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.result;
+  const supabase = createAdminClient();
   const { error } = await supabase.from("news").delete().eq("id", id);
   if (error) {
     console.error("deleteNews", error);
@@ -627,17 +633,52 @@ export async function updateDonation(
   if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
 
   const supabase = createAdminClient();
+
+  // Read current state so we mirror into the public `donors` roll only on the
+  // pending→paid transition (matches the webhook + manual-check paths) instead
+  // of duplicating a donor every time the operator edits shipping status.
+  const { data: current, error: fetchError } = await supabase
+    .from("donations")
+    .select("status, name, amount, anonymous, paid_at")
+    .eq("id", id)
+    .single();
+  if (fetchError || !current) {
+    console.error("updateDonation fetch", fetchError);
+    return { ok: false, message: "Хандив олдсонгүй." };
+  }
+
+  const becomingPaid =
+    parsed.data.status === "paid" && current.status !== "paid";
+
   const { error } = await supabase
     .from("donations")
     .update({
       status: parsed.data.status,
       shipping_status: parsed.data.shipping_status,
+      ...(becomingPaid && !current.paid_at
+        ? { paid_at: new Date().toISOString() }
+        : {}),
     })
     .eq("id", id);
   if (error) {
     console.error("updateDonation", error);
     return { ok: false, message: "Хадгалахад алдаа гарлаа." };
   }
+
+  if (becomingPaid) {
+    const displayName = current.anonymous
+      ? "Анонимоор хандивласан"
+      : current.name;
+    const { error: donorError } = await supabase
+      .from("donors")
+      .insert({ name: displayName, amount: current.amount });
+    if (donorError) {
+      console.error("updateDonation donors mirror", donorError);
+      // Non-fatal; the donation status was still updated.
+    }
+  }
+
   revalidatePath("/admin/donations");
+  if (becomingPaid) revalidatePath("/"); // public roll + raised total
   return { ok: true, message: "Шинэчлэгдлээ." };
 }

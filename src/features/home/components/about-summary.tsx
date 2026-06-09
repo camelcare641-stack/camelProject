@@ -83,7 +83,7 @@ function ImageSlot({
   if (src) {
     return (
       <div
-        className={`relative aspect-[4/3] overflow-hidden border border-border bg-white${
+        className={`relative aspect-[4/3] overflow-hidden${
           className ? ` ${className}` : ""
         }`}
       >
@@ -92,7 +92,7 @@ function ImageSlot({
           alt={label}
           fill
           sizes="(min-width: 1024px) 540px, 100vw"
-          className="object-cover"
+          className="object-contain"
         />
       </div>
     );

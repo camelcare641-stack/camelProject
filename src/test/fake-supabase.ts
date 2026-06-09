@@ -25,6 +25,7 @@ type FakeBuilder = {
   update: (payload?: unknown) => FakeBuilder;
   delete: () => FakeBuilder;
   eq: (column: string, value: unknown) => FakeBuilder;
+  is: (column: string, value: unknown) => FakeBuilder;
   in: (...args: unknown[]) => FakeBuilder;
   order: (...args: unknown[]) => FakeBuilder;
   limit: (...args: unknown[]) => FakeBuilder;
@@ -74,6 +75,7 @@ export function makeFakeClient(
         call.eq.push([column, value]);
         return builder;
       },
+      is: () => builder,
       in: () => builder,
       order: () => builder,
       limit: () => builder,

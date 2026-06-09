@@ -1,7 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkInvoicePayment } from "@/lib/qpay/client";
-import { sendThankYouEmail } from "@/lib/email/send-thank-you";
-import { site } from "@/lib/content";
+import { sendDonationThankYou } from "@/features/donate/thank-you";
 
 // QPay v2 requires the callback response to be exactly HTTP 200 with body
 // "SUCCESS" — any other shape is treated as a failed delivery and retried.
@@ -96,21 +95,13 @@ export async function GET(req: Request) {
     // Non-fatal.
   }
 
-  // Send thank-you email. Non-fatal if it fails.
-  try {
-    await sendThankYouEmail({
-      to: donation.email,
-      name: donation.name,
-      amount: donation.amount,
-      willShipCharm: donation.amount >= site.unitPrice,
-    });
-    await supabase
-      .from("donations")
-      .update({ thank_you_sent_at: new Date().toISOString() })
-      .eq("id", donation.id);
-  } catch (err) {
-    console.error("qpay callback: email send failed", err);
-  }
+  // Send thank-you email (idempotent across the webhook + manual-check paths).
+  await sendDonationThankYou(supabase, {
+    id: donation.id,
+    email: donation.email,
+    name: donation.name,
+    amount: donation.amount,
+  });
 
   return ok();
 }

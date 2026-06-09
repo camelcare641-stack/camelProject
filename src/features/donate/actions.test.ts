@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { makeFakeClient, findCall, type FakeConfig } from "@/test/fake-supabase";
 
 // Characterizes checkDonationPayment — the donor-triggered "check my payment"
-// path. It mirrors the webhook's flip-then-mirror logic but deliberately sends
-// NO email (the callback owns email to avoid double-sends). Locks that contract
-// before the shared confirmDonationPayment() extraction.
+// path. It mirrors the webhook's flip-then-mirror logic and now also sends the
+// thank-you email through the idempotent sendDonationThankYou helper (the
+// webhook may never fire — e.g. local dev — so this path must email too).
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
@@ -12,14 +12,17 @@ vi.mock("@/lib/qpay/client", () => ({
   createInvoice: vi.fn(),
   checkInvoicePayment: vi.fn(),
 }));
+vi.mock("@/features/donate/thank-you", () => ({ sendDonationThankYou: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { checkDonationPayment } from "./actions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkInvoicePayment } from "@/lib/qpay/client";
+import { sendDonationThankYou } from "@/features/donate/thank-you";
 
 const adminMock = createAdminClient as unknown as Mock;
 const checkMock = checkInvoicePayment as unknown as Mock;
+const thankYouMock = sendDonationThankYou as unknown as Mock;
 
 const PAID_ROW = {
   payment_id: "pay_9",
@@ -83,7 +86,7 @@ describe("checkDonationPayment", () => {
     expect(findCall(fake.calls, "donations", "update")).toBeUndefined();
   });
 
-  it("flips status and mirrors to donors — but sends NO email", async () => {
+  it("flips status, mirrors to donors, and sends the thank-you email", async () => {
     const fake = setup({
       donations: { read: { data: pending(), error: null }, write: { data: { id: "d1" }, error: null } },
       donors: { write: { data: null, error: null } },
@@ -101,10 +104,12 @@ describe("checkDonationPayment", () => {
       name: "Бат",
       amount: 25000,
     });
-    // This module never imports the email sender — the contract under test.
+    // Email is delegated to the idempotent helper (which dedupes vs the webhook).
+    expect(thankYouMock).toHaveBeenCalledOnce();
+    expect(thankYouMock.mock.calls[0][1]).toMatchObject({ id: "d1", amount: 25000 });
   });
 
-  it("does not mirror a donor when the row was already flipped", async () => {
+  it("does not mirror a donor or email when the row was already flipped", async () => {
     const fake = setup({
       donations: { read: { data: pending(), error: null }, write: { data: null, error: null } },
     });
@@ -112,5 +117,6 @@ describe("checkDonationPayment", () => {
     const result = await checkDonationPayment("d1");
     expect(result).toEqual({ ok: true, status: "paid" });
     expect(findCall(fake.calls, "donors", "insert")).toBeUndefined();
+    expect(thankYouMock).not.toHaveBeenCalled();
   });
 });

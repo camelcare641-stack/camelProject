@@ -168,7 +168,13 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
                           min={1}
                           step={1}
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                          // Render "" (not "0") when empty so there is no stray
+                          // leading zero to type behind, e.g. "0" + "1" → "01".
+                          value={field.value === 0 ? "" : field.value}
+                          onChange={(e) => {
+                            const next = e.target.value.replace(/^0+(?=\d)/, "");
+                            field.onChange(next === "" ? 0 : Number(next));
+                          }}
                           className="h-12 text-lg font-semibold"
                         />
                       </FormControl>
@@ -304,7 +310,7 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
               <DialogTitle className="font-display text-2xl text-charcoal">
                 {modal.qrTitle}
               </DialogTitle>
-              <DialogDescription>{modal.qrInstruction}</DialogDescription>
+              {/* <DialogDescription>{modal.qrInstruction}</DialogDescription> */}
             </DialogHeader>
 
             <div className="mt-2 flex flex-col items-center gap-4">
@@ -320,9 +326,9 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
                   <p className="text-center text-sm font-semibold text-charcoal">
                     {modal.bankAppTitle}
                   </p>
-                  <p className="mt-1 text-center text-xs text-charcoal-muted">
+                  {/* <p className="mt-1 text-center text-xs text-charcoal-muted">
                     {modal.bankAppHint}
-                  </p>
+                  </p> */}
                   <div className="mt-3 grid grid-cols-4 gap-2">
                     {state.bankApps.map((bank) => (
                       <a

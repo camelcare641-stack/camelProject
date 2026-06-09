@@ -7,16 +7,16 @@ import { makeFakeClient, findCall, type FakeConfig } from "@/test/fake-supabase"
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 vi.mock("@/lib/qpay/client", () => ({ checkInvoicePayment: vi.fn() }));
-vi.mock("@/lib/email/send-thank-you", () => ({ sendThankYouEmail: vi.fn() }));
+vi.mock("@/features/donate/thank-you", () => ({ sendDonationThankYou: vi.fn() }));
 
 import { GET } from "./route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkInvoicePayment } from "@/lib/qpay/client";
-import { sendThankYouEmail } from "@/lib/email/send-thank-you";
+import { sendDonationThankYou } from "@/features/donate/thank-you";
 
 const adminMock = createAdminClient as unknown as Mock;
 const checkMock = checkInvoicePayment as unknown as Mock;
-const emailMock = sendThankYouEmail as unknown as Mock;
+const emailMock = sendDonationThankYou as unknown as Mock;
 
 function req(id?: string) {
   const url = id
@@ -102,11 +102,14 @@ describe("qpay callback GET", () => {
     const donor = findCall(fake.calls, "donors", "insert")!;
     expect(donor.payload).toEqual({ name: "Бат", amount: 25000 });
 
+    // Email goes through the idempotent helper, which derives `to` /
+    // willShipCharm internally; the route just hands it the donation.
     expect(emailMock).toHaveBeenCalledOnce();
-    expect(emailMock.mock.calls[0][0]).toMatchObject({
-      to: "donor@example.mn",
+    expect(emailMock.mock.calls[0][1]).toMatchObject({
+      id: "d1",
+      email: "donor@example.mn",
+      name: "Бат",
       amount: 25000,
-      willShipCharm: true,
     });
   });
 

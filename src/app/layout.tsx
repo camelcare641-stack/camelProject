@@ -17,7 +17,24 @@ const manrope = Manrope({
   display: "swap",
 });
 
+// Absolute base for OG/Twitter image URLs. Prefer an explicit production URL,
+// fall back to Vercel's auto-injected production domain, then localhost in dev.
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
+// Shared social-share image. Reuses the existing camel-charm photo.
+const ogImage = {
+  url: "/camel-charm.png",
+  width: 1122,
+  height: 1402,
+  alt: site.hook,
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: site.fullName,
     template: `%s · ${site.name}`,
@@ -28,6 +45,15 @@ export const metadata: Metadata = {
     description: site.description,
     type: "website",
     locale: "mn_MN",
+    siteName: site.name,
+    url: "/",
+    images: [ogImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: site.fullName,
+    description: site.description,
+    images: [ogImage],
   },
 };
 

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createInvoice, checkInvoicePayment } from "@/lib/qpay/client";
+import { prioritizeBankApps } from "@/lib/qpay/banks";
+import { sendDonationThankYou } from "@/features/donate/thank-you";
 import {
   donorSchema,
   donationSchema,
@@ -120,7 +122,7 @@ export async function createDonationInvoice(
       qrImage: invoice.qr_image,
       qrText: invoice.qr_text,
       shortUrl: invoice.qPay_shortUrl,
-      bankApps: invoice.urls ?? [],
+      bankApps: prioritizeBankApps(invoice.urls ?? []),
     };
   } catch (err) {
     console.error("createDonationInvoice qpay", err);
@@ -139,8 +141,10 @@ export async function createDonationInvoice(
 
 // Manual "check payment" — donor-triggered pull, mirrors the callback's flip
 // logic so a missed/delayed webhook doesn't strand the donation in `pending`.
-// Idempotent via `.eq("status", "pending")`. No thank-you email here; the
-// callback path owns email side-effects to avoid double-sends.
+// Idempotent via `.eq("status", "pending")`. Sends the thank-you email through
+// sendDonationThankYou, which claims `thank_you_sent_at` atomically so this and
+// the webhook can't double-send (and in local dev with no webhook, this is the
+// only path that ever emails).
 export async function checkDonationPayment(
   donationId: string,
 ): Promise<
@@ -151,7 +155,7 @@ export async function checkDonationPayment(
 
   const { data: donation, error: fetchError } = await admin
     .from("donations")
-    .select("id, status, amount, name, qpay_invoice_id, anonymous")
+    .select("id, status, amount, name, email, qpay_invoice_id, anonymous")
     .eq("id", donationId)
     .single();
 
@@ -202,6 +206,14 @@ export async function checkDonationPayment(
       console.error("checkDonationPayment donors mirror", donorError);
       // Non-fatal; donation is still marked paid.
     }
+
+    // Idempotent: if the webhook already sent the email this is a no-op.
+    await sendDonationThankYou(admin, {
+      id: donation.id,
+      email: donation.email,
+      name: donation.name,
+      amount: donation.amount,
+    });
   }
 
   return { ok: true, status: "paid" };

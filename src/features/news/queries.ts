@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { publicClient } from "@/lib/supabase/public";
 
 export type News = {
@@ -14,7 +13,7 @@ export type News = {
 const SELECT = "id, slug, title, summary, content, image_url, published_at";
 
 export async function getNews(limit = 8): Promise<News[]> {
-  const supabase = await createClient();
+  const supabase = publicClient();
   const { data, error } = await supabase
     .from("news")
     .select(SELECT)
@@ -36,7 +35,7 @@ export type NewsPage = {
 };
 
 export async function getNewsPage(page = 1, pageSize = 12): Promise<NewsPage> {
-  const supabase = await createClient();
+  const supabase = publicClient();
   const safePage = Math.max(1, Math.floor(page) || 1);
   const from = (safePage - 1) * pageSize;
   const to = from + pageSize - 1;

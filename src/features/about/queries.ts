@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { publicClient } from "@/lib/supabase/public";
 import { fetchRows } from "@/lib/supabase/fetch";
 
 export type Partner = {
@@ -28,7 +28,7 @@ export type AboutContent = {
  * page and the home camel-section share a single query per request.
  */
 export const getAboutItems = cache(async function getAboutItems(): Promise<AboutContent> {
-  const supabase = await createClient();
+  const supabase = publicClient();
   const { data, error } = await supabase
     .from("about_items")
     .select("id, kind, title, body, sort_order")

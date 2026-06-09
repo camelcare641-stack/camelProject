@@ -1,12 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { useForm, useWatch, type Control } from "react-hook-form";
+import { useState, useTransition } from "react";
+import {
+  useForm,
+  useWatch,
+  type Control,
+  type FieldErrors,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
   Check,
+  ChevronsDownUp,
+  ChevronsUpDown,
   Gift,
   Home,
   MessageSquareQuote,
@@ -18,6 +25,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Form,
   FormControl,
@@ -32,7 +45,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/features/admin/components/image-upload";
 import { updateHomeContent } from "@/features/admin/actions";
 import { homeContentSchema, type HomeContentInput } from "@/lib/validations";
-import { cn } from "@/lib/utils";
 import { inputClass, labelClass } from "./form-styles";
 
 type FieldKey = keyof HomeContentInput;
@@ -163,6 +175,16 @@ export function HomeContentForm({
 
   const isDirty = form.formState.isDirty;
 
+  // Which accordion panels are open. Controlled so the expand-all toggle can
+  // drive every panel, and so a failed save can reveal the panel holding the
+  // error.
+  const [open, setOpen] = useState<string[]>([groups[0].id]);
+  const allOpen = open.length === groups.length;
+
+  function toggleAll() {
+    setOpen(allOpen ? [] : groups.map((g) => g.id));
+  }
+
   function onSubmit(values: HomeContentInput) {
     startTransition(async () => {
       const result = await updateHomeContent(values);
@@ -178,40 +200,81 @@ export function HomeContentForm({
     });
   }
 
+  // A field can fail validation inside a collapsed panel. Open every panel that
+  // holds an error (and scroll to the first) so the message is never hidden.
+  function onInvalid(errors: FieldErrors<HomeContentInput>) {
+    const bad = groups.filter((g) => g.fields.some((f) => errors[f.name]));
+    if (bad.length === 0) return;
+    setOpen((prev) => [
+      ...prev,
+      ...bad.map((g) => g.id).filter((id) => !prev.includes(id)),
+    ]);
+    requestAnimationFrame(() => {
+      document
+        .getElementById(bad[0].id)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   return (
     <Form {...form}>
-      <div className="lg:grid lg:grid-cols-[13rem_1fr] lg:items-start lg:gap-8">
-        <SectionNav control={form.control} />
+      <form
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+        className="min-w-0 pb-28 lg:pb-24"
+      >
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={toggleAll}
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold text-charcoal-muted transition-colors hover:bg-surface hover:text-charcoal"
+          >
+            {allOpen ? (
+              <ChevronsDownUp className="size-4" />
+            ) : (
+              <ChevronsUpDown className="size-4" />
+            )}
+            {allOpen ? "Бүгдийг хаах" : "Бүгдийг нээх"}
+          </button>
+        </div>
 
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="min-w-0 pb-28 lg:pb-24"
+        <Accordion
+          multiple
+          keepMounted
+          value={open}
+          onValueChange={(value) => setOpen(value as string[])}
+          className="border border-border bg-white"
         >
-          <div className="grid gap-6">
-            {groups.map((group) => {
-              const Icon = group.icon;
-              return (
-                <fieldset
-                  key={group.id}
-                  id={group.id}
-                  className="scroll-mt-28 border border-border bg-white lg:scroll-mt-8"
-                >
-                  <legend className="sr-only">{group.title}</legend>
-                  <div className="flex items-start gap-3 border-b border-border bg-surface px-5 py-4 sm:px-6">
+          {groups.map((group) => {
+            const Icon = group.icon;
+            return (
+              <AccordionItem
+                key={group.id}
+                value={group.id}
+                id={group.id}
+                className="scroll-mt-24 border-border lg:scroll-mt-8"
+              >
+                <AccordionTrigger className="items-start gap-3 rounded-none px-5 py-4 hover:no-underline data-panel-open:bg-surface sm:px-6">
+                  <span className="flex flex-1 items-start gap-3">
                     <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center bg-clay-tint text-clay">
                       <Icon className="size-[18px]" strokeWidth={2} />
                     </span>
-                    <div className="min-w-0">
-                      <h2 className="font-display text-lg font-semibold leading-tight text-charcoal">
+                    <span className="min-w-0">
+                      <span className="block font-display text-lg font-semibold leading-tight text-charcoal">
                         {group.title}
-                      </h2>
-                      <p className="mt-0.5 text-xs text-charcoal-muted">
+                      </span>
+                      <span className="mt-0.5 block text-xs font-normal text-charcoal-muted">
                         {group.blurb}
-                      </p>
-                    </div>
-                  </div>
+                      </span>
+                    </span>
+                  </span>
+                  <EmptyDot
+                    control={form.control}
+                    names={group.fields.map((f) => f.name)}
+                  />
+                </AccordionTrigger>
 
-                  <div className="grid gap-5 px-5 py-6 sm:px-6">
+                <AccordionContent className="px-5 pb-6 sm:px-6">
+                  <div className="grid gap-5 border-t border-border pt-6">
                     {group.fields.map((f) => (
                       <FormField
                         key={f.name}
@@ -255,111 +318,40 @@ export function HomeContentForm({
                       />
                     ))}
                   </div>
-                </fieldset>
-              );
-            })}
-          </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
 
-          <SaveBar pending={pending} isDirty={isDirty} onReset={() => form.reset()} />
-        </form>
-      </div>
+        <SaveBar
+          pending={pending}
+          isDirty={isDirty}
+          onReset={() => form.reset()}
+        />
+      </form>
     </Form>
   );
 }
 
-// Sticky section index. Horizontal scroll strip on mobile, vertical rail on
-// desktop. Highlights the section currently in view and marks sections whose
-// fields are all empty (those render blank on the live page).
-function SectionNav({ control }: { control: Control<HomeContentInput> }) {
-  const values = useWatch({ control }) as Partial<HomeContentInput>;
-  const [activeId, setActiveId] = useState(groups[0].id);
-
-  useEffect(() => {
-    const sections = groups
-      .map((g) => document.getElementById(g.id))
-      .filter((el): el is HTMLElement => el !== null);
-
-    // Active = the last section whose heading has scrolled above an imaginary
-    // line near the top of the viewport. Reading top position (rather than an
-    // IntersectionObserver band) keeps the final, possibly-short section
-    // highlighted once you reach the bottom of the page.
-    function update() {
-      const line = 140;
-      let current = groups[0].id;
-      for (const el of sections) {
-        if (el.getBoundingClientRect().top - line <= 0) current = el.id;
-      }
-      setActiveId(current);
-    }
-
-    let ticking = false;
-    function onScroll() {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        update();
-        ticking = false;
-      });
-    }
-
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, []);
-
-  function goTo(id: string) {
-    document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-    setActiveId(id);
-  }
-
+// Gold dot shown when every field in a section is empty (the section renders
+// blank on the live page). Watches only its own fields so typing in one
+// section never re-renders the others.
+function EmptyDot({
+  control,
+  names,
+}: {
+  control: Control<HomeContentInput>;
+  names: FieldKey[];
+}) {
+  const values = useWatch({ control, name: names }) as (string | undefined)[];
+  if (values.some((v) => v)) return null;
   return (
-    <nav
-      aria-label="Хэсгүүд"
-      className="sticky top-0 z-10 -mx-4 mb-4 flex gap-1.5 overflow-x-auto border-b border-border bg-paper/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:top-8 lg:mx-0 lg:mb-0 lg:flex-col lg:overflow-visible lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
-      <p className="hidden px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-charcoal-muted lg:block">
-        Хэсгүүд
-      </p>
-      {groups.map((group) => {
-        const active = group.id === activeId;
-        const empty = group.fields.every((f) => !values?.[f.name]);
-        return (
-          <button
-            key={group.id}
-            type="button"
-            onClick={() => goTo(group.id)}
-            aria-current={active ? "true" : undefined}
-            className={cn(
-              "relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold transition-colors lg:w-full",
-              active
-                ? "bg-clay-tint text-clay"
-                : "text-charcoal-muted hover:bg-paper hover:text-charcoal lg:hover:bg-surface",
-            )}
-          >
-            {active && (
-              <span
-                aria-hidden
-                className="absolute left-0 top-1/2 hidden h-5 w-1 -translate-y-1/2 rounded-r-full bg-clay lg:block"
-              />
-            )}
-            <span className="truncate">{group.title}</span>
-            {empty && (
-              <span
-                aria-label="хоосон"
-                title="Энэ хэсэг хоосон байна"
-                className="ml-auto size-1.5 shrink-0 rounded-full bg-gold"
-              />
-            )}
-          </button>
-        );
-      })}
-    </nav>
+    <span
+      aria-label="хоосон"
+      title="Энэ хэсэг хоосон байна"
+      className="mt-2 size-1.5 shrink-0 rounded-full bg-gold"
+    />
   );
 }
 
@@ -377,7 +369,7 @@ function SaveBar({
 }) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:left-[15rem] lg:px-10">
-      <div className="mx-auto flex max-w-5xl items-center justify-end gap-3 lg:pl-[13rem]">
+      <div className="mx-auto flex max-w-5xl items-center justify-end gap-3">
         <p
           aria-live="polite"
           className="mr-auto flex items-center gap-2 text-xs text-charcoal-muted sm:text-sm"

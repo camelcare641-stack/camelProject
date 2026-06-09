@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { publicClient } from "@/lib/supabase/public";
 import { fetchRows } from "@/lib/supabase/fetch";
 
 export type Donor = {
@@ -9,7 +9,7 @@ export type Donor = {
 };
 
 export async function getCampaignStats() {
-  const supabase = await createClient();
+  const supabase = publicClient();
   const { data, error } = await supabase
     .from("donors")
     .select("amount, id");

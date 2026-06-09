@@ -30,9 +30,24 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getUser() makes a network call to Supabase. If the network is flaky the
+  // request would otherwise hang for undici's full 10s connect timeout on
+  // every /admin/* navigation. Cap it at 3s and fail *closed* (treat as
+  // signed-out) so a network blip can never bypass the auth gate.
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"] =
+    null;
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("supabase auth timeout")), 3000),
+      ),
+    ]);
+    user = result.data.user;
+  } catch {
+    // Network/Supabase unreachable — leave user null so the guard below
+    // redirects protected routes to /admin/login.
+  }
 
   const isLoginRoute = pathname === "/admin/login";
 
