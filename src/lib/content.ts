@@ -58,6 +58,16 @@ export const homeDefaults = {
     "QR кодыг өөрийн банкны аппаар уншуулан шилжүүлэг хийнэ үү.",
 } as const;
 
+// Static home-page UI strings (not DB-overridable, unlike `homeDefaults`).
+export const home = {
+  // §12.5 "хэдэн тэмээ" calculator
+  calcTitle: "Хэдэн тэмээ авах вэ?",
+  calcLabel: "Тоо ширхэг",
+  calcDecrease: "Хасах",
+  calcIncrease: "Нэмэх",
+  calcTotalLabel: "Нийт дүн",
+} as const;
+
 export const nav = [
   { href: "/", label: "Нүүр" },
   { href: "/about", label: "Төслийн тухай" },

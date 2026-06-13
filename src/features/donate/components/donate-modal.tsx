@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,9 +46,16 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onBankFallback?: () => void;
+  /** Pre-fills the amount field (e.g. from the "хэдэн тэмээ" calculator). */
+  initialAmount?: number;
 };
 
-export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
+export function DonateModal({
+  open,
+  onOpenChange,
+  onBankFallback,
+  initialAmount,
+}: Props) {
   const [state, setState] = useState<ModalState>({ kind: "form" });
   const [pending, startTransition] = useTransition();
   const [checking, startChecking] = useTransition();
@@ -58,7 +65,7 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
   const form = useForm<DonationInput>({
     resolver: zodResolver(donationSchema),
     defaultValues: {
-      amount: site.unitPrice,
+      amount: initialAmount ?? site.unitPrice,
       name: "",
       email: "",
       phone: "",
@@ -66,6 +73,14 @@ export function DonateModal({ open, onOpenChange, onBankFallback }: Props) {
       anonymous: false,
     },
   });
+
+  // Sync the amount to the latest `initialAmount` each time the modal opens, so
+  // the calculator's current total carries into a freshly-opened modal.
+  useEffect(() => {
+    if (open) {
+      form.setValue("amount", initialAmount ?? site.unitPrice);
+    }
+  }, [open, initialAmount, form]);
 
   const amount = useWatch({ control: form.control, name: "amount" }) ?? 0;
   const phoneRequired = amount >= site.unitPrice;

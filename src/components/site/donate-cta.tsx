@@ -13,6 +13,8 @@ type Props = {
   className?: string;
   label?: string;
   fullWidth?: boolean;
+  /** Pre-fills the donate modal's amount (e.g. from the camel calculator). */
+  initialAmount?: number;
 };
 
 /**
@@ -26,6 +28,7 @@ export function DonateCTA({
   className,
   label,
   fullWidth = false,
+  initialAmount,
 }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -57,6 +60,7 @@ export function DonateCTA({
         open={open}
         onOpenChange={setOpen}
         onBankFallback={handleBankFallback}
+        initialAmount={initialAmount}
       />
     </>
   );
