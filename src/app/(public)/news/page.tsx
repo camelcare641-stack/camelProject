@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PageHero } from "@/components/site/page-hero";
 import { getNewsPage } from "@/features/news/queries";
 import { formatDate } from "@/lib/utils";
 import { cta, pagination, site } from "@/lib/content";
@@ -32,17 +33,15 @@ export default async function NewsIndexPage({
 
   return (
     <>
-      <section className="border-b border-border bg-white">
-        <div className="mx-auto max-w-4xl px-4 pt-16 pb-12 sm:px-6 sm:pt-20">
-          <p className="eyebrow">Сэтгүүл</p>
-          <h1 className="mt-4 font-display text-4xl font-bold text-balance text-charcoal sm:text-6xl">
-            Мэдээ
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-charcoal-muted">
-            Төслийн үйл ажиллагаа, үр дүн, тайлангийн мэдээллүүд.
-          </p>
-        </div>
-      </section>
+      {/* Pass `image` later (e.g. a static path or settings field) to swap the
+          light-brown band for a photo hero. */}
+      <PageHero
+        eyebrow="Сэтгүүл"
+        title="Мэдээ"
+        lead="Төслийн үйл ажиллагаа, үр дүн, тайлангийн мэдээллүүд."
+        variant="brand"
+        image={null}
+      />
 
       <section className="bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6">

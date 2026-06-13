@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageHero } from "@/components/site/page-hero";
 import { ContactForm } from "@/features/contact/components/contact-form";
 import { FAQ } from "@/features/contact/components/faq";
 import { getFaqs } from "@/features/contact/queries";
@@ -19,18 +20,15 @@ export default async function ContactPage() {
 
   return (
     <>
-      <section className="border-b border-border bg-white">
-        <div className="mx-auto max-w-4xl px-4 pt-16 pb-12 sm:px-6 sm:pt-20">
-          <p className="eyebrow">Холбоо</p>
-          <h1 className="mt-4 font-display text-4xl font-bold text-balance text-charcoal sm:text-6xl">
-            Холбоо барих
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-charcoal-muted">
-            Санал, асуулт, хамтын ажиллагааны хүсэлтээ доорх маягтаар бидэнд
-            илгээгээрэй.
-          </p>
-        </div>
-      </section>
+      {/* Pass `image` later (e.g. a static path or settings field) to swap the
+          light-brown band for a photo hero. */}
+      <PageHero
+        eyebrow="Холбоо"
+        title="Холбоо барих"
+        lead="Санал, асуулт, хамтын ажиллагааны хүсэлтээ доорх маягтаар бидэнд илгээгээрэй."
+        variant="brand"
+        image={null}
+      />
 
       <section className="bg-white py-20 sm:py-24">
         <div className="mx-auto grid max-w-6xl gap-14 px-4 sm:px-6 lg:grid-cols-12 lg:gap-20">

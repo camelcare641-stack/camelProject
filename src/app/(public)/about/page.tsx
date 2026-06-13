@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PageHero } from "@/components/site/page-hero";
 import { Button } from "@/components/ui/button";
 import { cta, site } from "@/lib/content";
 import { getPartners, getAboutItems } from "@/features/about/queries";
@@ -23,22 +24,19 @@ export default async function AboutPage() {
 
   return (
     <>
-      {/* Intro */}
-      <section className="border-b border-border bg-white">
-        <div className="mx-auto max-w-4xl px-4 pt-16 pb-12 sm:px-6 sm:pt-20">
-          <p className="eyebrow">Төслийн танилцуулга</p>
-          <h1 className="mt-4 font-display text-4xl font-bold text-balance text-charcoal sm:text-6xl">
-            {settings.fullName}
-          </h1>
-          <p className="mt-5 font-display text-xl italic text-charcoal-muted sm:text-2xl">
-            &ldquo;{settings.slogan}&rdquo;
-          </p>
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-charcoal-muted">
-            {settings.org}-ийн санаачилгаар хэрэгжиж буй хүүхдийн хөгжил,
-            сэтгэлзүй, боловсролыг дэмжих төсөл.
-          </p>
-        </div>
-      </section>
+      {/* Intro — pass `image` later (e.g. a static path or settings field) to
+          swap the clay band for a photo hero. */}
+      <PageHero
+        eyebrow="Төслийн танилцуулга"
+        title={settings.fullName}
+        lead={`${settings.org}-ийн санаачилгаар хэрэгжиж буй хүүхдийн хөгжил, сэтгэлзүй, боловсролыг дэмжих төсөл.`}
+        variant="brand"
+        image={null}
+      >
+        <p className="mx-auto mt-6 max-w-2xl font-display text-xl italic text-charcoal-muted sm:text-2xl">
+          &ldquo;{settings.slogan}&rdquo;
+        </p>
+      </PageHero>
 
       {/* Үндэслэл */}
       <section className="bg-white py-20 sm:py-24">

@@ -22,8 +22,15 @@
   --teal:            #0F6E56;
   --teal-dark:       #0A5141;
   --teal-tint:       #E1F0EB;
+  /* Gold is decoration-only (ornaments, accents) — never used for body text on
+   * white. `--gold-deep` is reserved for large impact numbers. */
+  --gold:            #C8923A;
+  --gold-deep:       #A2741F;
+  --gold-tint:       #F7EBD3;
   --charcoal:        #1F1B17;
   --charcoal-muted:  #6E6962;
+  /* Neutral warm section band (distinct from the white body surface). */
+  --surface:         #F6F4EE;
   --border-strong:   #D6CFC0;
 
   /* shadcn token contract */
@@ -61,8 +68,12 @@
   --color-teal:            var(--teal);
   --color-teal-dark:       var(--teal-dark);
   --color-teal-tint:       var(--teal-tint);
+  --color-gold:            var(--gold);
+  --color-gold-deep:       var(--gold-deep);
+  --color-gold-tint:       var(--gold-tint);
   --color-charcoal:        var(--charcoal);
   --color-charcoal-muted:  var(--charcoal-muted);
+  --color-surface:         var(--surface);
   --color-border-strong:   var(--border-strong);
 
   /* shadcn color aliases — required by ui/* components */
@@ -125,6 +136,47 @@
 }
 
 @layer components {
+  /* ───────────────────────────────────────────────────────────────────────
+   * Section bands — tinted backgrounds from the "Gobi Warm" palette. Each
+   * page hero / fallback surface picks one so pages read as distinct without
+   * a photo. Bands carry charcoal/clay text only (never colored text on a
+   * colored band). Utilities still override per-instance.
+   * ─────────────────────────────────────────────────────────────────────── */
+  .band-neutral   { background-color: var(--surface); }
+  .band-brand     { background-color: var(--clay-tint); }
+  .band-confirm   { background-color: var(--teal-tint); }
+  .band-highlight { background-color: var(--gold-tint); }
+
+  /* Faint paper-grain texture, layered over a band's background-color. Very
+   * low opacity so it reads as warmth, not noise. */
+  .texture-grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.035'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+
+  /* Centered divider: two short rules flanking a small gold diamond. Lines
+   * inherit `currentColor` so they adapt to dark/photo heroes (white text). */
+  .ornament-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: var(--border-strong);
+  }
+  .ornament-divider::before,
+  .ornament-divider::after {
+    content: "";
+    height: 1px;
+    width: 2.5rem;
+    background: currentColor;
+  }
+  .ornament-diamond {
+    width: 7px;
+    height: 7px;
+    transform: rotate(45deg);
+    background: var(--gold);
+  }
+
   /* Small-caps eyebrow label. Allow per-instance utility overrides. */
   .eyebrow {
     font-family: var(--font-sans);

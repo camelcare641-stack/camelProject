@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PageHero } from "@/components/site/page-hero";
 import { Button } from "@/components/ui/button";
 import { cta, site } from "@/lib/content";
 import { getNews } from "@/features/news/queries";
@@ -18,17 +19,15 @@ export default async function ActivitiesPage() {
 
   return (
     <>
-      <section className="border-b border-border bg-white">
-        <div className="mx-auto max-w-4xl px-4 pt-16 pb-12 sm:px-6 sm:pt-20">
-          <p className="eyebrow">Хөтөлбөр</p>
-          <h1 className="mt-4 font-display text-4xl font-bold text-charcoal sm:text-6xl">
-            Үйл ажиллагаа
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-charcoal-muted">
-            Төслийн хүрээнд хэрэгжүүлж буй дөрвөн үндсэн хөтөлбөр.
-          </p>
-        </div>
-      </section>
+      {/* Pass `image` later (e.g. a static path or settings field) to swap the
+          light-brown band for a photo hero. */}
+      <PageHero
+        eyebrow="Хөтөлбөр"
+        title="Үйл ажиллагаа"
+        lead="Төслийн хүрээнд хэрэгжүүлж буй дөрвөн үндсэн хөтөлбөр."
+        variant="brand"
+        image={null}
+      />
 
       <section className="bg-white py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
